@@ -1,7 +1,9 @@
 import "server-only";
+import { isPersonalMode } from "../provider-settings";
 
 import { createHash } from "node:crypto";
-import { formatCredits, planOf } from "@/config/economy";
+import { formatCredits } from "@/config/economy";
+import { generationPlan } from "../generation-limits";
 import { getModel, models, quoteJob, resolveValues, visibleControls, visibleSlots, type Filled, type Kind, type ModelDef } from "@/registry";
 import { listAssets, ownedAsset, saveAsset, UPLOAD_LIMIT, type AssetRow } from "../assets";
 import type { User } from "../auth";
@@ -51,7 +53,9 @@ export function modelDetail(m: ModelDef) {
 export function listModels(f: { kind?: string | null; available?: boolean }) {
   const kind = f.kind ? KINDS.find((k) => k === f.kind) : undefined;
   if (f.kind && !kind) throw badRequest("Unknown kind. Use image, video, audio or music.");
-  return models.filter((m) => (!kind || m.kind === kind) && (!f.available || m.status === "available")).map(modelSummary);
+  return models.filter((m) => (!kind || m.kind === kind) && (!f.available || (
+    m.status === "available" && (!isPersonalMode() || m.id.startsWith("byteplus-") || m.id.startsWith("local-") || m.id.startsWith("decart-"))
+  ))).map(modelSummary);
 }
 
 export function findModel(id: unknown): ModelDef {
@@ -99,7 +103,7 @@ export function quoteDraft(user: User, body: Record<string, unknown>) {
     missingInputs: missing,
     promptMissing: Boolean(model.prompt?.required && !prompt),
     balance: have,
-    affordable: have >= q.millicredits,
+    affordable: isPersonalMode() || have >= q.millicredits,
   };
 }
 
@@ -248,6 +252,6 @@ export function cancelGeneration(userId: string, id: string) {
 
 export function balanceOut(user: User) {
   const b = balance(user.id);
-  const plan = planOf(user.plan);
+  const plan = generationPlan(user.plan);
   return { balance: b, credits: formatCredits(Math.max(0, b)), plan: { id: plan.id, name: plan.name, concurrency: plan.concurrency } };
 }

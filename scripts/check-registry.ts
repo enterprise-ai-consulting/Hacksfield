@@ -63,8 +63,8 @@ for (const model of models) {
           else if (allowed.length && !allowed.includes(sent)) problems.push(`header "${name}: ${sent}" not accepted by ${q.request.endpoint}: ${where}`);
         }
         if (!catalogEndpoint(q.request.endpoint)) problems.push(`unknown endpoint ${q.request.endpoint}: ${where}`);
-        else if (!q.exact) problems.push(`no price row on ${q.request.endpoint}: ${where}`);
-        else if (!(q.usdPerJob > 0)) problems.push(`zero price on ${q.request.endpoint}: ${where}`);
+        else if (!q.exact && !((q.request.endpoint.startsWith("byteplus.") || q.request.endpoint.startsWith("decart.")) && q.metered)) problems.push(`no price row on ${q.request.endpoint}: ${where}`);
+        else if (!(q.usdPerJob > 0) && !q.request.endpoint.startsWith("local.")) problems.push(`zero price on ${q.request.endpoint}: ${where}`);
         if (JSON.stringify(q.request).includes("undefined")) problems.push(`undefined in request: ${where}`);
         low = Math.min(low, q.millicredits);
         high = Math.max(high, q.millicredits);
@@ -103,4 +103,4 @@ if (problems.length) {
   for (const p of problems.slice(0, 40)) console.error("  " + p);
   process.exit(1);
 }
-console.log("Every combination has an exact price.");
+console.log("Every combination has an exact price or an explicit usage-based reservation.");

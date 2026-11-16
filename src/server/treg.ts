@@ -3,6 +3,9 @@ import "server-only";
 import { lookup } from "node:dns/promises";
 import net from "node:net";
 import { catalogEndpoint } from "@/registry/quote";
+import { BytePlusUnreachable, callBytePlus, getBytePlusTask } from "./byteplus";
+import { DecartUnreachable, callDecart, getDecartTask } from "./decart";
+import { providerSettings } from "./provider-settings";
 
 /**
  * The only file that talks to Treg (https://treg.to), the gateway in front of every
@@ -22,7 +25,10 @@ const base = () => (process.env.TREG_BASE_URL ?? "https://treg.to").replace(/\/+
 const token = () => (process.env.TREG_TOKEN ?? "").trim();
 
 /** `mock` makes every generation locally, with no provider call and no cost. */
-export function tregMode(): "live" | "mock" {
+export function tregMode(endpoint?: string): "live" | "mock" {
+  if (endpoint?.startsWith("local.")) return "live";
+  if (endpoint?.startsWith("byteplus.")) return process.env.BYTEPLUS_MODE === "mock" ? "mock" : "live";
+  if (endpoint?.startsWith("decart.")) return process.env.DECART_MODE === "mock" ? "mock" : "live";
   const mode = process.env.TREG_MODE;
   if (mode === "mock") return "mock";
   if (mode === "live") return "live";
@@ -34,6 +40,12 @@ export function redact(text: string): string {
   let out = text.replace(/https?:\/\/([^\s"'<>\\/]+)[^\s"'<>\\]*/g, "https://$1/...");
   const t = token();
   if (t) out = out.split(t).join("[token]");
+  try {
+    const settings = providerSettings();
+    for (const key of [settings.apiKey, settings.speechApiKey, settings.audioApiKey, settings.decartApiKey, settings.tosAccessKeyId, settings.tosSecretAccessKey]) if (key) out = out.split(key).join("[key]");
+  } catch {
+    return "Provider error (generation settings could not be read).";
+  }
   return out.length > 2000 ? out.slice(0, 2000) + "..." : out;
 }
 
@@ -48,6 +60,7 @@ export class TregUnreachable extends Error {
 }
 
 export interface TregReply {
+  provider?: "byteplus" | "decart";
   status: number;
   /** A 2xx answer that Treg did not flag as its own error. */
   ok: boolean;
@@ -151,6 +164,20 @@ const RESERVED_HEADER = /^(x-treg-.*|idempotency-key|authorization|cookie|host|c
 
 /** Calls one catalog endpoint. Throws `TregUnreachable` only when no answer came back. */
 export async function tregCall(endpointId: string, opts: CallOptions = {}): Promise<TregReply> {
+  if (endpointId.startsWith("decart.")) {
+    try { return await callDecart(endpointId, opts); }
+    catch (err) {
+      if (err instanceof DecartUnreachable) throw new TregUnreachable(err.message, err.status);
+      throw err;
+    }
+  }
+  if (endpointId.startsWith("byteplus.")) {
+    try { return await callBytePlus(endpointId, opts); }
+    catch (err) {
+      if (err instanceof BytePlusUnreachable) throw new TregUnreachable(err.message, err.status);
+      throw err;
+    }
+  }
   const method = (catalogEndpoint(endpointId)?.method ?? "POST").toUpperCase();
   const url = new URL(`${base()}/call/${encodeURIComponent(endpointId)}`);
   for (const [k, v] of Object.entries(opts.query ?? {})) if (v !== undefined) url.searchParams.set(k, String(v));
@@ -250,6 +277,25 @@ export function classify(reply: TregReply): TregFailure {
   const body = reply.json as Record<string, unknown> | undefined;
   const detail = redact(`${reply.status} ${reply.json !== undefined ? JSON.stringify(reply.json) : `<${reply.contentType || "no body"}>`}`);
 
+  if (reply.provider === "decart") {
+    const message = reply.status === 401 || reply.status === 403 ? "Decart refused this key or model access. Check your developer API key in Generation settings."
+      : reply.status === 402 ? "Your Decart API account needs credits. Hacksfield has no membership or credit top-up requirement."
+      : reply.status === 429 ? "Decart is limiting requests. Wait a little before submitting again."
+      : redact(providerMessage(reply.json) || "Decart could not complete this request. Check its task history before submitting again.");
+    return { kind: "provider", code: "provider_error", message, detail };
+  }
+
+  if (reply.provider === "byteplus") {
+    const said = providerMessage(reply.json);
+    const message = reply.status === 401 || reply.status === 403
+      ? "BytePlus refused this key or model access. Check the platform key for ModelArk, or the separate Speech key and service activation for Seed Speech, in Generation settings."
+      : reply.status === 402 ? "Your BytePlus account needs provider balance. Hacksfield has no credit top-up requirement in personal mode."
+      : reply.status === 429 ? "BytePlus is limiting requests. Wait a little and try again."
+      : said ? redact(said) : "BytePlus could not complete this request. Check the provider task history before submitting again.";
+    // Direct BytePlus requests have no gateway replay guarantee. Never auto-resubmit them.
+    return { kind: "provider", code: "provider_error", message, detail };
+  }
+
   if (reply.tregError) {
     const code = typeof body?.error === "string" ? body.error : `gateway_${reply.status}`;
     if (RETRY.has(code)) return { kind: "retry", code, message: BUSY, detail };
@@ -274,6 +320,9 @@ export function classify(reply: TregReply): TregFailure {
 /* ---------------------------------- tasks ---------------------------------- */
 
 export interface TregTask {
+  /** Private direct-provider content, already fetched with server-side credentials. */
+  bytes?: Buffer;
+  cost_micro?: number | null;
   call_id: string;
   endpoint_id: string;
   task_id: string | null;
@@ -292,7 +341,21 @@ export interface TregTask {
 }
 
 /** Reads the status of an asynchronous call. Polling is free. */
-export async function tregTask(callId: string): Promise<TregTask> {
+export async function tregTask(callId: string, endpoint?: string, requestBody?: Record<string, unknown>): Promise<TregTask> {
+  if (callId.startsWith("decart:")) {
+    try { return await getDecartTask(callId, endpoint, requestBody); }
+    catch (err) {
+      if (err instanceof DecartUnreachable) throw new TregUnreachable(err.message, err.status);
+      throw err;
+    }
+  }
+  if (callId.startsWith("byteplus:")) {
+    try { return await getBytePlusTask(callId, endpoint, requestBody); }
+    catch (err) {
+      if (err instanceof BytePlusUnreachable) throw new TregUnreachable(err.message, err.status);
+      throw err;
+    }
+  }
   const res = await send(`${base()}/tasks/${encodeURIComponent(callId)}`, { headers: { "X-Treg-Token": token() }, redirect: "error" }, 30_000);
   const reply = await toReply(res, 32 * MB);
   if (reply.status < 200 || reply.status >= 300 || !reply.json || typeof reply.json !== "object") {

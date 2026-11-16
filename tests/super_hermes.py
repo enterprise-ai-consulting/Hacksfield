@@ -535,11 +535,11 @@ try:
     late = [c for c in Fake.calls if c["tool"] == "remember"][-1]
     check("order: it waited a moment for the stream, not forever", 1.2 < late["seconds"] < 4, f"{late['seconds']:.2f}s")
 
-    # --- memory and questions go through Parallax ---
+    # --- memory and questions go through Hacksfield ---
     new = turn(cid, "what do you remember")
     check("memory: recall reads the member's own notes", any("teal" in r["body"].get("text", "") for r in new if r["kind"] == "message"), str(shape(new)))
     s, mem = call("GET", "/api/super/memory")
-    check("memory: saved in Parallax, where the member can see it", any("teal" in m["text"] for m in mem.get("memories", [])), str(mem)[:160])
+    check("memory: saved in Hacksfield, where the member can see it", any("teal" in m["text"] for m in mem.get("memories", [])), str(mem)[:160])
     send(cid, "ask me whether blue works")
     q = wait_for(lambda: cards(cid, "question", "pending"), 20)
     check("ask_user: a question card with choices", q and q[0]["body"]["choices"] == ["Yes", "No"], str(q[0]["body"] if q else None)[:160])

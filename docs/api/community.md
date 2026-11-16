@@ -65,7 +65,7 @@ the range given per route. A cursor that cannot be read answers 400 ("reload the
 - `prompt` is `null` unless `allowRecreate` is true **or** the viewer is the author.
   Show a "Recreate" button only when `allowRecreate` (or `viewer.isAuthor`).
 - `model` may be `null` (rare: a file with no model), and `model.name` falls back to the id if a
-  model has been removed from Parallax.
+  model has been removed from Hacksfield.
 - `viewer` is `null` when signed out.
 - `author.avatarUrl` is a file link or `null`; draw initials when null. The link works for every
   viewer for as long as the file is that member's profile picture.

@@ -7,6 +7,7 @@ import { LogoMark } from "@/components/brand/logo";
 import { LoginDialog } from "@/components/entry/login-dialog";
 import { SearchDialog } from "@/components/entry/search-dialog";
 import { brand } from "@/config/brand";
+import { personalInstallation } from "@/config/installation";
 import { navPrimary, navStudios, pricingBadge, routes, type NavId, type NavLink } from "@/content/site";
 import { useSession } from "@/lib/session";
 import { AccountMenu } from "./account-menu";
@@ -48,6 +49,7 @@ function SearchButton() {
 }
 
 function EnterpriseLink() {
+  if (personalInstallation) return null;
   return (
     <Link href={routes.enterprise} className={cn(quietLink, "hidden text-text-idle hover:text-text-tab lg:inline-flex")}>
       <Building2 className="size-[14px]" strokeWidth={1.5} aria-hidden />
@@ -58,11 +60,11 @@ function EnterpriseLink() {
 
 function PlansLink({ label }: { label: string }) {
   return (
-    <Link href={routes.pricing} className={cn(quietLink, "inline-flex text-brand hover:opacity-80")}>
+    <Link href={personalInstallation ? "/settings/provider" : routes.pricing} className={cn(quietLink, "inline-flex text-brand hover:opacity-80")}>
       <Crown className="size-[14px] fill-current" strokeWidth={1.5} aria-hidden />
       <span className="flex items-center gap-1">
-        {label}
-        {pricingBadge ? <span>{pricingBadge}</span> : null}
+        {personalInstallation ? "Generation settings" : label}
+        {!personalInstallation && pricingBadge ? <span>{pricingBadge}</span> : null}
       </span>
     </Link>
   );
@@ -129,10 +131,10 @@ function MemberCluster({ active }: { active?: NavId }) {
         <Link href={routes.library} aria-label="Library" className={iconButtonClass(24, "dim")}>
           <Folder className="size-4 fill-current" strokeWidth={1.5} aria-hidden />
         </Link>
-        <Link href={routes.invite} aria-label="Invite a friend, earn credits" className={iconButtonClass(28, "lime", "relative")}>
+        {!personalInstallation ? <Link href={routes.invite} aria-label="Invite a friend, earn credits" className={iconButtonClass(28, "lime", "relative")}>
           <Gift className="size-4" strokeWidth={1.5} aria-hidden />
           <span aria-hidden className="absolute top-[3px] right-[3px] size-[6px] rounded-full bg-brand ring-2 ring-page" />
-        </Link>
+        </Link> : null}
       </span>
       <EnterpriseLink />
       <span className="hidden min-[900px]:inline-flex">

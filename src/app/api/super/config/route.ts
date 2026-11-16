@@ -12,6 +12,7 @@ export const GET = route(() => {
     // An outside engine picks its own model, so there is one choice: the engine itself.
     models: engine ? [{ id: "auto", name: engine.name, description: "Runs on a Hermes agent.", tier: "standard" }] : LLM_MODELS,
     defaultModel: "auto",
+    billing: process.env.PARALLAX_ASSISTANT_PROVIDER === "codex-subscription" ? "subscription" : serviceMode("llm") === "live" ? "api" : "demo",
     engine: engine ? { id: "hermes", name: engine.name } : { id: "builtin", name: "Built-in" },
     services: { llm: serviceMode("llm"), computer: serviceMode("computer"), connectors: serviceMode("connectors") },
     limits: { maxSteps: limits.maxSteps(), turnSeconds: Math.round(limits.turnMs() / 1000), maxSchedules: limits.maxSchedules, messageMaxLength: 20_000, maxFilesPerMessage: 10 },

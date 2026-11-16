@@ -3,7 +3,9 @@ import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import { ApiError } from "../errors";
 import { sameOrigin } from "../origin";
+import { isPersonalMode, providerSettings } from "../provider-settings";
 import { errorResponse, logRequest, missingScope, openKey, rateHeaders, rateLimited, type RateState } from "./api";
+import { downloadFile } from "./downloads";
 import type { KeyAuth, Scope } from "./keys";
 import { balanceOut, createGeneration, findModel, getGeneration, listFiles, listGenerations, listModels, modelDetail, quoteDraft } from "./service";
 
@@ -20,11 +22,16 @@ import { balanceOut, createGeneration, findModel, getGeneration, listFiles, list
 export const MODERN_VERSIONS = ["2026-07-28"];
 export const LEGACY_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26"];
 const SUPPORTED = [...MODERN_VERSIONS, ...LEGACY_VERSIONS];
-const SERVER_INFO = { name: "parallax", title: "Parallax", version: "1.0.0" };
+const SERVER_INFO = { name: "parallax", title: "Hacksfield", version: "1.0.0" };
 const INSTRUCTIONS =
-  "Parallax makes images, video and audio. Call list_models to find a model, get_model to see its controls and media slots, " +
+  "Hacksfield makes images, video and audio. Call list_models to find a model, get_model to see its controls and media slots, " +
   "quote to check the price, then generate. Generations run in the background: poll get_generation until the status is " +
-  "succeeded or failed. Prices are in millicredits (1000 = 1 credit).";
+  "succeeded or failed. Call get_download for each finished file to return an HTTPS download link; local file URLs cannot be opened by ChatGPT. " +
+  "Downloads copy the selected file into private BytePlus storage for an hour-long link; storage/transfer charges are separate. " +
+  "Prices are in millicredits (1000 = 1 credit).";
+const instructions = () => isPersonalMode()
+  ? INSTRUCTIONS + ` This personal installation has no Hacksfield membership or credit charges: credit labels are legacy. BytePlus and Decart media share the enforced US$${providerSettings().dailyBudgetUsd} rolling 24-hour budget. BytePlus defaults are byteplus-seedream-5.5 and byteplus-seedance-2.5. Decart editing models are decart-lucy-2.6, decart-lucy-vton-3.6, decart-lucy-restyle-2 and decart-lucy-image-2; they require uploaded source files. Use the provider the user requests.`
+  : INSTRUCTIONS;
 
 type Json = Record<string, unknown>;
 type Id = string | number | null;
@@ -56,8 +63,10 @@ interface Tool {
   description: string;
   scope: Scope;
   inputSchema: Json;
+  outputSchema?: Json;
   readOnly: boolean;
-  run(auth: KeyAuth, args: Json): { out: Json; credits?: number };
+  openWorld?: boolean;
+  run(auth: KeyAuth, args: Json): { out: Json; credits?: number } | Promise<{ out: Json; credits?: number }>;
 }
 
 const num = (v: unknown, fallback: number, min: number, max: number) => {
@@ -70,7 +79,7 @@ const TOOLS: Tool[] = [
   {
     name: "list_models",
     title: "List models",
-    description: "Lists the models Parallax can run. Filter by kind: image, video, audio or music.",
+    description: "Lists the models Hacksfield can run. Filter by kind: image, video, audio or music.",
     scope: "read",
     readOnly: true,
     inputSchema: { type: "object", properties: { kind: { type: "string", enum: ["image", "video", "audio", "music"] } } },
@@ -138,13 +147,29 @@ const TOOLS: Tool[] = [
     }),
   },
   {
+    name: "get_download",
+    title: "Prepare a private download",
+    description: "Use after a generation succeeds to return its image, video or audio file in chat. Copies one owned file to private BytePlus storage and returns an HTTPS link valid for one hour. Storage/transfer charges apply outside the media budget. Does not generate anything or publish the library.",
+    scope: "generate",
+    readOnly: false,
+    openWorld: true,
+    inputSchema: { type: "object", properties: { id: s("An owned file id from get_generation or list_files.") }, required: ["id"] },
+    outputSchema: {
+      type: "object", required: ["file"], properties: { file: {
+        type: "object", required: ["id", "kind", "mime", "bytes", "name", "url", "expiresAt"],
+        properties: { id: s("Owned file id."), kind: s("Media kind."), mime: s("MIME type."), bytes: { type: "integer" }, name: s("Download filename."), url: s("Temporary HTTPS download URL."), expiresAt: s("Expiry in ISO 8601 UTC.") },
+      } },
+    },
+    run: async (a, args) => ({ out: { ...await downloadFile(a.user.id, String(args.id ?? "")) } }),
+  },
+  {
     name: "get_balance",
     title: "Get balance",
     description: "The credit balance (in millicredits and formatted) and the plan.",
     scope: "read",
     readOnly: true,
     inputSchema: { type: "object", properties: {} },
-    run: (a) => ({ out: balanceOut(a.user) }),
+    run: (a) => ({ out: { ...balanceOut(a.user), ...(isPersonalMode() ? { personalMode: true, mediaBudgetUsd: providerSettings().dailyBudgetUsd, note: "No Hacksfield membership or credit charge; BytePlus and Decart media share this budget. BytePlus storage charges are separate." } : {}) } }),
   },
 ];
 
@@ -154,7 +179,8 @@ export const toolList = () =>
     title: t.title,
     description: t.description,
     inputSchema: t.inputSchema,
-    annotations: { readOnlyHint: t.readOnly, destructiveHint: false, openWorldHint: false },
+    ...(t.outputSchema ? { outputSchema: t.outputSchema } : {}),
+    annotations: { readOnlyHint: t.readOnly, destructiveHint: false, openWorldHint: !!t.openWorld },
   }));
 
 /* -------------------------------- transport -------------------------------- */
@@ -209,7 +235,7 @@ export async function handleMcp(req: NextRequest, authorization: string | null):
     if (method === "initialize") {
       const asked = typeof params.protocolVersion === "string" ? params.protocolVersion : "";
       const version = LEGACY_VERSIONS.includes(asked) ? asked : LEGACY_VERSIONS[0];
-      return json({ jsonrpc: "2.0", id, result: { protocolVersion: version, capabilities: { tools: { listChanged: false } }, serverInfo: SERVER_INFO, instructions: INSTRUCTIONS } });
+      return json({ jsonrpc: "2.0", id, result: { protocolVersion: version, capabilities: { tools: { listChanged: false } }, serverInfo: SERVER_INFO, instructions: instructions() } });
     }
 
     // Which era is this request from?
@@ -239,7 +265,7 @@ export async function handleMcp(req: NextRequest, authorization: string | null):
           supportedVersions: SUPPORTED,
           capabilities: { tools: { listChanged: false } },
           _meta: { "io.modelcontextprotocol/serverInfo": SERVER_INFO },
-          instructions: INSTRUCTIONS,
+          instructions: instructions(),
         });
       case "tools/list":
         return ok({ tools: toolList() });
@@ -250,7 +276,7 @@ export async function handleMcp(req: NextRequest, authorization: string | null):
         const args = (params.arguments && typeof params.arguments === "object" && !Array.isArray(params.arguments) ? params.arguments : {}) as Json;
         try {
           if (!auth.key.scopes.includes(tool.scope)) throw missingScope(tool.scope);
-          const r = tool.run(auth, args);
+          const r = await tool.run(auth, args);
           credits = r.credits ?? 0;
           return ok({ content: [{ type: "text", text: JSON.stringify(r.out) }], structuredContent: r.out, isError: false });
         } catch (err) {

@@ -10,7 +10,7 @@ import { useCopy } from "./copy";
 const kindIcon: Record<IdeaKind, LucideIcon> = { image: ImageIcon, video: Clapperboard, audio: Music, account: Wallet };
 const kindLabel: Record<IdeaKind, string> = { image: "Image", video: "Video", audio: "Audio", account: "Account" };
 
-/** "Things to ask with Parallax": the 3 × 2 grid of example asks. A card copies its prompt. */
+/** "Things to ask with Hacksfield": the 3 × 2 grid of example asks. A card copies its prompt. */
 export function Ideas() {
   const [tab, setTab] = useState<IdeaKind | "all">("all");
   const shown = tab === "all" ? ideas : ideas.filter((i) => i.kind === tab);

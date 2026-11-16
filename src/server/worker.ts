@@ -9,6 +9,9 @@ import { ApiError } from "./errors";
 import { ResultError, mediaFromReply, mediaFromTask } from "./extract";
 import type { JobRow } from "./jobs";
 import { mockDelayMs, mockMedia, mockShouldFail } from "./mock";
+import { hasFfmpeg } from "./media";
+import { uploadByteplusVideo } from "./byteplus-storage";
+import { transformLocalVideo } from "./local-video";
 import { TregUnreachable, classify, redact, taskFailure, taskOutcome, tregCall, tregMode, tregTask, tregUploadMedia, type TregTask } from "./treg";
 
 /**
@@ -136,7 +139,7 @@ function sweep(minAgeMs: number) {
 }
 
 /** Google's routes are never answered from a stored copy, so sending twice could charge twice. */
-const replayable = (endpoint: string) => !endpoint.startsWith("google-ai.");
+const replayable = (endpoint: string) => !endpoint.startsWith("google-ai.") && !endpoint.startsWith("byteplus.") && !endpoint.startsWith("decart.");
 
 /* --------------------------------- submit --------------------------------- */
 
@@ -147,22 +150,36 @@ async function start(job: JobRow) {
   const attempts = job.attempts + 1;
   const output = outputOf(job);
 
-  if (tregMode() === "mock") {
+  if (job.endpoint.startsWith("local.video.")) {
+    const ids = parseJson<Record<string, string[]>>(job.inputs, {}).source ?? [];
+    if (ids.length !== 1) return fail(job.id, "invalid_request", "Add one source video first.");
+    const source = ownedAsset(job.user_id, ids[0]);
+    try {
+      const file = await transformLocalVideo(await readAsset(source), job.endpoint.split(".")[2], parseJson(job.params, {}));
+      return await finish(job, [file], "local", 0);
+    } catch (err) { if (err instanceof ApiError) return fail(job.id, err.code, err.message); throw err; }
+  }
+
+  if (tregMode(job.endpoint) === "mock") {
     run("UPDATE jobs SET treg_call_id = 'mock', next_poll_at = ? WHERE id = ?", now + mockDelayMs(output), job.id);
     return;
   }
+  if (job.endpoint.startsWith("byteplus.music.seedance-") && !(await hasFfmpeg())) return fail(job.id, "provider_configuration", "Music extraction requires ffmpeg and ffprobe. Install them before generating a paid soundtrack.");
 
   const stored = parseJson<{ body?: unknown; query?: Record<string, string | number | boolean>; headers?: Record<string, string> }>(job.request, {});
   let body: unknown;
   try {
-    body = await fillAssets(job.user_id, stored.body ?? {});
+    body = await fillAssets(job.user_id, stored.body ?? {}, job.endpoint);
   } catch (err) {
-    if (err instanceof ApiError) return fail(job.id, "invalid_request", "A file this generation uses was removed.");
+    if (err instanceof ApiError) return fail(job.id, err.code, err.message);
     if (err instanceof TregUnreachable) return retryOrFail(job, attempts); // nothing was sent yet
     throw err;
   }
 
   const rule = catalogEndpoint(job.endpoint);
+  // A lost direct-provider response may still be billable. Arm the reservation only
+  // after local reference validation, immediately before sending the provider request.
+  if (job.endpoint.startsWith("byteplus.") || job.endpoint.startsWith("decart.")) run("UPDATE jobs SET provider_cost_micro = ? WHERE id = ?", Math.ceil(job.est_usd * 1e6), job.id);
   let reply;
   try {
     reply = await tregCall(job.endpoint, {
@@ -175,6 +192,11 @@ async function start(job: JobRow) {
       maxCostUsd: Math.max(job.est_usd * 2, rule?.cost?.ceiling ?? 0, 0.02),
     });
   } catch (err) {
+    if (job.endpoint.startsWith("decart.") && err instanceof ApiError) {
+      // Decart's local validation errors occur before its HTTP request is sent.
+      run("UPDATE jobs SET provider_cost_micro = 0 WHERE id = ?", job.id);
+      return fail(job.id, err.code, err.message);
+    }
     if (!(err instanceof TregUnreachable)) throw err;
     console.warn(`[worker] ${job.id} ${job.endpoint}: ${err.message}`);
     // No answer. The call may have run, so only send it again where a replay is free.
@@ -183,6 +205,7 @@ async function start(job: JobRow) {
   }
 
   if (!reply.ok) {
+    if ((reply.provider === "byteplus" || reply.provider === "decart") && reply.status >= 400 && reply.status < 500) run("UPDATE jobs SET provider_cost_micro = 0 WHERE id = ?", job.id);
     const f = classify(reply);
     console.warn(`[worker] ${job.id} ${job.endpoint} refused (${f.kind}): ${f.detail}`);
     if (f.kind === "retry") return retryOrFail(job, attempts, f.message);
@@ -191,7 +214,7 @@ async function start(job: JobRow) {
 
   if (reply.isAsync || rule?.async) {
     if (!reply.callId) return fail(job.id, "provider_error", "The model did not accept this one. Try again.");
-    run("UPDATE jobs SET treg_call_id = ?, provider_cost_micro = ?, next_poll_at = ? WHERE id = ?", reply.callId, reply.costMicro, Date.now() + pause(rule?.async?.interval), job.id);
+    run("UPDATE jobs SET treg_call_id = ?, provider_cost_micro = COALESCE(?, provider_cost_micro), next_poll_at = ? WHERE id = ?", reply.callId, reply.costMicro, Date.now() + pause(rule?.async?.interval), job.id);
     return;
   }
 
@@ -199,8 +222,9 @@ async function start(job: JobRow) {
   // result turns out to be unreadable. The call id stays empty until the files are saved:
   // a crash before then sends the job again, and the gateway replays the answer for free.
   if (reply.costMicro != null) run("UPDATE jobs SET provider_cost_micro = ? WHERE id = ?", reply.costMicro, job.id);
-  const files = await mediaFromReply(reply, output, job.expect_count);
-  await finish(job, files, reply.callId, reply.costMicro);
+  const files = await mediaFromReply(reply, output, job.endpoint === "byteplus.image.seedream-5-5-layers" ? 8 : job.expect_count);
+  const layers = job.endpoint === "byteplus.image.seedream-5-5-layers" && reply.json && typeof reply.json === "object" ? (reply.json as { data?: Record<string, unknown>[] }).data : undefined;
+  await finish(job, files, reply.callId, reply.costMicro, layers?.length === files.length ? layers : undefined);
 }
 
 function retryOrFail(job: JobRow, attempts: number, message = "The model is busy or unavailable. Try again shortly.") {
@@ -220,7 +244,7 @@ const PLACEHOLDER = /asset(-b64)?:(ast_[A-Za-z0-9]{16})/g;
  * The stored request names the member's files by id (`asset:<id>`, `asset-b64:<id>`).
  * Just before sending, each one becomes a short-lived public URL or its bytes in base64.
  */
-async function fillAssets(userId: string, body: unknown): Promise<unknown> {
+async function fillAssets(userId: string, body: unknown, endpoint: string): Promise<unknown> {
   const text = JSON.stringify(body);
   const urls = new Map<string, string>();
   const datas = new Map<string, string>();
@@ -228,7 +252,8 @@ async function fillAssets(userId: string, body: unknown): Promise<unknown> {
     const into = b64 ? datas : urls;
     if (into.has(id)) continue;
     const row = ownedAsset(userId, id); // refuses anything the member does not own
-    into.set(id, b64 ? (await readAsset(row)).toString("base64") : await publicUrl(row));
+    if (b64 && row.bytes > 30 * MB) throw new ResultError("That reference file is too large. Use one under 30 MB.");
+    into.set(id, b64 ? (await readAsset(row)).toString("base64") : await publicUrl(row, endpoint.startsWith("byteplus.")));
   }
   if (urls.size + datas.size === 0) return body;
   const quoted = (s: string) => JSON.stringify(s).slice(1, -1);
@@ -236,18 +261,18 @@ async function fillAssets(userId: string, body: unknown): Promise<unknown> {
 }
 
 /** A URL the provider can fetch the file from. Kept on the asset and reused until it is close to expiring. */
-async function publicUrl(row: AssetRow): Promise<string> {
+async function publicUrl(row: AssetRow, byteplus = false): Promise<string> {
   const now = Date.now();
-  if (row.remote_url && (row.remote_expires_at ?? 0) > now + 3_600_000) return row.remote_url;
+  if (row.remote_url && (row.remote_expires_at ?? 0) > now + 3_600_000 && (!byteplus || new URL(row.remote_url).hostname.endsWith(".tos-s3-ap-southeast-1.bytepluses.com"))) return row.remote_url;
   if (row.bytes > 30 * MB) throw new ResultError("That reference file is too large for this model. Use one under 30 MB.");
-  const url = await tregUploadMedia(await readAsset(row), row.mime);
-  run("UPDATE assets SET remote_url = ?, remote_expires_at = ? WHERE id = ?", url, now + 6 * 86_400_000, row.id);
+  const url = byteplus ? await uploadByteplusVideo(row) : await tregUploadMedia(await readAsset(row), row.mime);
+  run("UPDATE assets SET remote_url = ?, remote_expires_at = ? WHERE id = ?", url, now + (byteplus ? 6 * 3_600_000 : 6 * 86_400_000), row.id);
   return url;
 }
 
 /* ---------------------------------- poll ---------------------------------- */
 
-const expired = (job: JobRow, output: MediaType) => Date.now() - (job.started_at ?? job.created_at) > (output === "video" ? 30 : 10) * 60_000;
+const expired = (job: JobRow, output: MediaType) => Date.now() - (job.started_at ?? job.created_at) > (output === "video" || job.endpoint.startsWith("byteplus.music.seedance-") ? 30 : 10) * 60_000;
 const TOO_SLOW = "This took too long and was stopped. Try again.";
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
@@ -264,7 +289,7 @@ async function poll(job: JobRow) {
 
   let task: TregTask;
   try {
-    task = await tregTask(job.treg_call_id!);
+    task = await tregTask(job.treg_call_id!, job.endpoint, parseJson<{ body?: Record<string, unknown> }>(job.request, {}).body);
   } catch (err) {
     if (!(err instanceof TregUnreachable)) throw err;
     if (err.status === 404 || err.status === 410) return fail(job.id, "provider_error", "The model lost track of this one. Try again.");
@@ -273,12 +298,17 @@ async function poll(job: JobRow) {
   }
 
   const outcome = taskOutcome(job.endpoint, task);
-  if (outcome === "failed") return fail(job.id, "provider_error", taskFailure(task));
+  if (outcome === "failed") {
+    if (job.endpoint.startsWith("byteplus.")) run("UPDATE jobs SET provider_cost_micro = ? WHERE id = ?", task.cost_micro ?? 0, job.id);
+    return fail(job.id, "provider_error", redact(taskFailure(task)));
+  }
   if (outcome === "running") {
     if (expired(job, output)) return fail(job.id, "timeout", TOO_SLOW);
     return later(pause(task.retry_after ?? catalogEndpoint(job.endpoint)?.async?.interval));
   }
 
+  // Preserve confirmed provider usage even if downloading or extracting the result fails.
+  if (task.cost_micro != null) run("UPDATE jobs SET provider_cost_micro = ? WHERE id = ?", task.cost_micro, job.id);
   // Result links are short-lived, so collect now. One more try covers a dropped download.
   let files: Buffer[];
   try {
@@ -288,24 +318,26 @@ async function poll(job: JobRow) {
     await sleep(3000);
     files = await mediaFromTask(job.endpoint, task, output, job.expect_count);
   }
-  await finish(job, files);
+  await finish(job, files, null, task.cost_micro ?? null);
 }
 
 /* ---------------------------------- ending --------------------------------- */
 
 /** Saves the files, marks the job done and turns the credit hold into the charge. */
-async function finish(job: JobRow, files: Buffer[], callId: string | null = null, costMicro: number | null = null) {
+async function finish(job: JobRow, files: Buffer[], callId: string | null = null, costMicro: number | null = null, layers?: Record<string, unknown>[]) {
   // The job may have been cancelled, or removed with its owner, while the provider was working.
   if (!get("SELECT 1 FROM jobs WHERE id = ? AND status = 'running'", job.id)) return;
   const output = outputOf(job);
-  const want = Math.max(1, job.expect_count);
+  const want = job.endpoint === "byteplus.image.seedream-5-5-layers" ? Math.max(1, Math.min(8, files.length)) : Math.max(1, job.expect_count);
   // A crash between saving and marking done can leave files from an earlier try. Start clean.
   for (const old of assetsOfJobs([job.id]).get(job.id) ?? []) removeAsset(job.user_id, old.id);
 
   const saved: AssetRow[] = [];
   const drop = () => saved.forEach((a) => removeAsset(job.user_id, a.id));
   try {
-    for (const bytes of files.slice(0, want)) {
+    for (const [index, bytes] of files.slice(0, want).entries()) {
+      const layer = layers?.[index];
+      const metadata = layer ? Object.fromEntries(["name", "description", "z_index", "bounding_box"].filter(key => layer[key] !== undefined).map(key => [key, layer[key]])) : undefined;
       saved.push(
         await saveAsset({
           userId: job.user_id,
@@ -315,7 +347,8 @@ async function finish(job: JobRow, files: Buffer[], callId: string | null = null
           jobId: job.id,
           prompt: job.prompt,
           modelId: job.model_id,
-          params: parseJson<Record<string, unknown>>(job.params, {}),
+          title: typeof layer?.name === "string" ? layer.name.slice(0, 160) : undefined,
+          params: { ...parseJson<Record<string, unknown>>(job.params, {}), ...(metadata && JSON.stringify(metadata).length <= 10_000 ? { layer: metadata } : {}) },
         }),
       );
     }

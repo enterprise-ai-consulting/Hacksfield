@@ -4,6 +4,7 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, Download, Ellipsis, Fi
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import { formatCredits } from "@/config/economy";
+import { personalInstallation } from "@/config/installation";
 import { cinema } from "@/content/cinema";
 import { api, fetcher, type Asset } from "@/lib/api";
 import { refreshSession } from "@/lib/session";
@@ -282,7 +283,7 @@ function BatchButton({ projectId }: { projectId: string }) {
               <span className="text-text-secondary">{t.batchCost}</span>
               <span className="flex items-center gap-1 font-medium">
                 <Sparkles className="size-3 fill-current" strokeWidth={1.5} aria-hidden />
-                {formatCredits(q.data.quote.total)}
+                {personalInstallation ? q.data.quote.providerCost : formatCredits(q.data.quote.total)}
               </span>
             </div>
             <Button variant="lime" size="md" disabled={busy || !q.data.quote.affordable} onClick={() => void start()}>

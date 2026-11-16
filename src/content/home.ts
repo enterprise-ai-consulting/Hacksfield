@@ -1,6 +1,6 @@
 /**
  * The words and lists on the home page (/) and the Explore feed (/explore). Layout and style
- * come from the design; everything here is Parallax's own. Pictures are `Artwork` slots,
+ * come from the design; everything here is Hacksfield's own. Pictures are `Artwork` slots,
  * named in each entry, so they can be filled in later without touching the components.
  */
 import { brand } from "@/config/brand";
@@ -15,7 +15,7 @@ export interface HomeSlide {
   art: string;
 }
 
-/** The hero carousel. Each slide points at one of Parallax's own studios or pages. */
+/** The hero carousel. Each slide points at one of Hacksfield's own studios or pages. */
 export const heroSlides: HomeSlide[] = [
   { id: "image", title: `${brand.name} Image`, sub: "Every image model in one composer, with the price shown first.", href: routes.image, art: "home/slide-image" },
   { id: "video", title: `${brand.name} Video`, sub: "Turn a line of text or a still into a moving shot.", href: routes.video, art: "home/slide-video" },
@@ -203,9 +203,9 @@ export const banners = {
   },
 };
 
-/** The chips at the bottom: every place in Parallax. */
+/** The chips at the bottom: every place in Hacksfield. */
 export const moreFeatures = {
-  title: "More from Parallax",
+  title: "More from Hacksfield",
   links: [
     { label: "Image", href: routes.image },
     { label: "Video", href: routes.video },

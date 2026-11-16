@@ -53,3 +53,16 @@ __pycache__/
 
 # local deploy state
 /deploy/run/
+
+# Credentials and local exports never belong in a source distribution.
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+*.zip
+.gitleaks-report*
+provider-settings.json

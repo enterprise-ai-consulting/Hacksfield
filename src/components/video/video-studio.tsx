@@ -14,7 +14,7 @@ import { VideoDetail } from "./detail";
 import { Examples } from "./examples";
 import { History, HistorySkeleton } from "./history";
 import { Segmented } from "./segmented";
-import { VideoForm, type FormTab } from "./video-form";
+import { VideoForm, editModels, type FormTab } from "./video-form";
 
 type View = "examples" | "history";
 
@@ -41,6 +41,10 @@ export function VideoStudio() {
 
   function applyExample(example: VideoExample) {
     setTab("create");
+    if (studio.model && editModels([studio.model]).length) {
+      const create = studio.models.find(m => m.status === "available" && !editModels([m]).length);
+      if (create) studio.pickModel(create.id);
+    }
     studio.setPrompt(example.prompt);
     const box = formRef.current?.querySelector("textarea");
     box?.scrollIntoView({ block: "nearest", behavior: "smooth" });

@@ -1,4 +1,6 @@
 import { getModel, quoteJob, resolveValues, type Filled, type MediaType, type Values } from "@/registry";
+import { generationProvider } from "@/config/installation";
+import { BYTEPLUS_IMAGE, BYTEPLUS_VIDEO } from "@/registry/byteplus-latest";
 import type { BrandData, ProductData } from "./types";
 
 /**
@@ -236,6 +238,16 @@ export const FORMATS: AdFormat[] = [
   },
 ];
 
+if (generationProvider === "byteplus") for (const format of FORMATS) {
+  format.modelId = format.output === "image" ? BYTEPLUS_IMAGE : format.output === "video" ? BYTEPLUS_VIDEO : "byteplus-seed-speech-2.0";
+  const values = format.output === "audio" ? { voice: "en_female_skye_uranus_bigtts", speed: 0, style: "Warm and friendly" }
+    : { ...format.values, resolution: format.output === "image" ? "2K" : format.spoken ? "480p" : "720p" };
+  format.values = resolveValues(getModel(format.modelId)!, values, fullSlots(format));
+  format.slots = format.slots.map(slot => ({ ...slot, slot: slot.slot === "portrait" ? "refs" : slot.slot === "voice" ? "audio" : slot.slot }));
+  if (format.speech) format.speech = { modelId: "byteplus-seed-speech-2.0", values: { voice: "en_female_skye_uranus_bigtts", speed: 0, style: "Warm and friendly" } };
+  if (format.speech) format.recipe = c => `Animate the presenter in image 1 speaking directly to camera. Use reference audio 1 as the spoken dialogue, synchronize the mouth movement and preserve the presenter's identity. Dialogue: ${c.script}`;
+}
+
 const byId = new Map(FORMATS.map((f) => [f.id, f]));
 
 export function getFormat(id: unknown): AdFormat | undefined {
@@ -265,7 +277,7 @@ function checkStep(where: string, modelId: string, values: Values, filled: Fille
   }
   if (!model.prompt) problems.push(`${where}: ${modelId} takes no prompt, so the recipe would be dropped`);
   const quote = quoteJob(model, { prompt: "price check", values: resolved, filled, count: 1 });
-  if (!quote.exact || quote.metered) problems.push(`${where}: ${modelId} has no exact price for these values`);
+  if ((!quote.exact || quote.metered) && !(quote.request.endpoint.startsWith("byteplus.") && quote.metered)) problems.push(`${where}: ${modelId} has no exact price for these values`);
   if (quote.jobs !== 1) problems.push(`${where}: one variation must be one job`);
 }
 

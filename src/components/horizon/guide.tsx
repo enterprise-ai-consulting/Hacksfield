@@ -1,4 +1,5 @@
 "use client";
+import { personalInstallation } from "@/config/installation";
 
 import { ArrowRight, ArrowUpRight, Lightbulb } from "lucide-react";
 import Link from "next/link";
@@ -54,6 +55,13 @@ function SectionTitle({ id, children }: { id: string; children: string }) {
 }
 
 function Credits() {
+  if (personalInstallation) return (
+    <section id="credits" aria-labelledby="credits-title" className="flex scroll-mt-20 flex-col gap-4">
+      <SectionTitle id="credits">No Hacksfield membership</SectionTitle>
+      <p className="max-w-[640px] text-sm leading-6 text-text-secondary">This installation has no paid Hacksfield plan, credit purchase or markup. Your provider applies eligible free allowances first and bills usage after those allowances run out. The daily app budget covers all Hacksfield generations.</p>
+      <Link href="/settings/provider" className="text-sm font-semibold text-brand underline">Generation settings and spending limit</Link>
+    </section>
+  );
   const c = copy.credits;
   const facts = [
     { value: formatCredits(SIGNUP_CREDITS * MILLI), text: c.facts.signup },

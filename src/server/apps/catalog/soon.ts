@@ -1,5 +1,5 @@
 /**
- * Tools that need a kind of model Parallax does not run yet (video in, masks, face identity,
+ * Tools that need a kind of model Hacksfield does not run yet (video in, masks, face identity,
  * upscalers). They are listed so screens can show them greyed out. They cannot run.
  */
 import type { AppDef } from "../types";

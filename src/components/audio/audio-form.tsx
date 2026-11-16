@@ -1,4 +1,5 @@
 "use client";
+import { generationPrice, personalInstallation } from "@/config/installation";
 
 import { ChevronRight, CircleAlert, LoaderCircle, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { useState } from "react";
@@ -14,13 +15,13 @@ const NEEDS_ACCOUNT = new Set(["insufficient_credits", "unauthorized", "forbidde
 
 /** The 56px lime Generate bar at the foot of the panel, with the live price beside the word. */
 function GenerateBar({ studio }: { studio: Studio }) {
-  const price = studio.quote ? formatCredits(studio.quote.millicredits) : null;
+  const price = studio.quote ? personalInstallation ? generationPrice(studio.quote) : formatCredits(studio.quote.millicredits) : null;
   return (
     <button
       type="button"
       disabled={studio.busy}
       aria-disabled={studio.blocker ? true : undefined}
-      aria-label={price ? `${audioCopy.generate}, ${price} credits` : audioCopy.generate}
+      aria-label={price ? `${audioCopy.generate}, ${price}${personalInstallation ? " provider cost" : " credits"}` : audioCopy.generate}
       onClick={() => void studio.generate()}
       className="relative flex h-14 w-full shrink-0 items-center justify-center gap-2 overflow-clip rounded-xl bg-brand bg-linear-to-b from-[#FFFF1400] to-[#FFFF14] [box-shadow:#00000026_0px_32px_24px,#00000040_0px_6px_4px] transition-[filter] duration-150 hover:brightness-105 active:brightness-90 disabled:cursor-progress"
     >
@@ -83,6 +84,7 @@ function TabForm({ studio, surface }: { studio: Studio; surface: AudioSurface })
   return (
     <>
       <ScriptBox studio={studio} label={label} hint={copy.scriptHint} info={copy.scriptInfo} onSubmit={() => void studio.generate()} />
+      {studio.model?.id === "byteplus-seedance-music" ? <p className="px-1 text-xs leading-5 text-text-secondary">BytePlus music clips: 4–15 seconds. A Seedance video is generated and its soundtrack saved as MP3, billed at video rates.</p> : null}
       <ModelRow studio={studio} />
       <BatchRow studio={studio} />
       {rows.map((c) => (

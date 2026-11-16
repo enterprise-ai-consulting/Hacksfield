@@ -1,6 +1,6 @@
 /**
  * The Shorts studio's own words and sample ideas. Layout and style come from the design;
- * every line here is Parallax's. Keep lines about as long as the ones they replace.
+ * every line here is Hacksfield's. Keep lines about as long as the ones they replace.
  */
 
 /** Longest clip this page asks for, in seconds. A short stays short. */
@@ -109,7 +109,7 @@ export const shortsCopy = {
     generate: "Generate",
     cost: (credits: string) => `${credits} credits`,
     noPrice: "Price shows once the form is filled in",
-    guest: "You are trying Parallax as a guest. Create an account to keep your shorts.",
+    guest: "You are trying Hacksfield as a guest. Create an account to keep your shorts.",
     join: "Create account",
     topUp: "Get credits",
     dismiss: "Dismiss",

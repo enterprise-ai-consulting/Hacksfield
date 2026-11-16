@@ -1,6 +1,6 @@
 # Supercomputer API (agent chat)
 
-Supercomputer is Parallax's agent chat. A member talks to an assistant that plans and runs
+Supercomputer is Hacksfield's agent chat. A member talks to an assistant that plans and runs
 creative work: it generates images, video, speech and music with any registry model, uses
 files from the member's library, drives a cloud computer, and acts in connected apps.
 
@@ -354,7 +354,7 @@ every chat of the project.
 
 ### Skills
 
-Skills are reusable instruction packs. Built-in skills come with Parallax and cannot be
+Skills are reusable instruction packs. Built-in skills come with Hacksfield and cannot be
 changed. Members can add their own. Attach skills to a chat with
 `PATCH /api/super/chats/:id { skillIds }`, up to 10.
 
@@ -408,7 +408,7 @@ match, 409 `connect_failed`. The sign-in window does not land here: it lands on 
 | POST | `/api/super/connectors/mcp` | `{ name 1–60, url }` (https only, no user info, ≤500) | `{ server }` |
 | DELETE | `/api/super/connectors/mcp/:id` | | `{ ok }` |
 
-`McpServer = { id, name, url, createdAt }`. Servers are **stored only**. Parallax does not
+`McpServer = { id, name, url, createdAt }`. Servers are **stored only**. Hacksfield does not
 call them yet, so tell the member they are saved for later. The limit is 20.
 
 ### Memory
@@ -503,21 +503,21 @@ From `migrations/080_super.sql`. Every table is keyed to `users(id)` with cascad
 The chat can run on one of two engines. Members see the same chat either way: the same
 rows, cards, credits and approvals.
 
-**Built-in** (the default). Parallax runs the loop itself: it calls the assistant model,
+**Built-in** (the default). Hacksfield runs the loop itself: it calls the assistant model,
 runs the tools it asks for, and repeats up to `SUPER_MAX_STEPS` times.
 
-**Hermes** (`SUPER_ENGINE=hermes`). A Hermes agent runs the loop. Parallax sends each message to the agent's API server and shows its answer
-as it streams. The agent reaches Parallax's tools over MCP, so media generation, the
-member's library, memory, questions and schedules still run inside Parallax, as that
+**Hermes** (`SUPER_ENGINE=hermes`). A Hermes agent runs the loop. Hacksfield sends each message to the agent's API server and shows its answer
+as it streams. The agent reaches Hacksfield's tools over MCP, so media generation, the
+member's library, memory, questions and schedules still run inside Hacksfield, as that
 member, with their credits and their approval cards.
 
 ```
-member ──▶ Parallax ──POST {HERMES_URL}/v1/responses (stream)──▶ Hermes agent
+member ──▶ Hacksfield ──POST {HERMES_URL}/v1/responses (stream)──▶ Hermes agent
                 ▲                                                    │
                 └────────── POST /api/super/mcp (tools) ◀────────────┘
 ```
 
-### What Parallax sends
+### What Hacksfield sends
 
 One request per message: `input` is the member's message, `instructions` is the same
 system prompt the built-in engine uses plus a few notes for the agent, and `conversation`
@@ -531,7 +531,7 @@ MCP over Streamable HTTP, for the engine only. It answers **404** on the built-i
 - **Who may call.** `Authorization: Bearer <SUPER_ENGINE_TOKEN>`. Sessions and API keys are
   not accepted. A wrong token is 401, and repeated wrong tokens from one address are
   throttled (429).
-- **Whose turn.** Every tool takes a required `turn` argument: a key Parallax makes for each
+- **Whose turn.** Every tool takes a required `turn` argument: a key Hacksfield makes for each
   message and gives to the agent in that message's instructions. A call with no key, a
   made-up key, or the key of a reply that has ended is refused as a tool error. The key is
   never stored, and it is cut out of the reply if the agent repeats it.
@@ -549,8 +549,8 @@ The agent sees the tools as `mcp__<HERMES_MCP_NAME>__<tool>`, for example
 ### Setting it up
 
 1. On the agent's machine, turn on Hermes' API server and note its key (`API_SERVER_KEY`).
-2. Make a long random engine token for Parallax (`openssl rand -hex 32`).
-3. Add Parallax to the agent's `config.yaml`:
+2. Make a long random engine token for Hacksfield (`openssl rand -hex 32`).
+3. Add Hacksfield to the agent's `config.yaml`:
    ```yaml
    mcp_servers:
      parallax:
@@ -560,10 +560,10 @@ The agent sees the tools as `mcp__<HERMES_MCP_NAME>__<tool>`, for example
        timeout: 2100          # longer than SUPER_APPROVAL_MS
        connect_timeout: 30
    ```
-4. Start Parallax with `SUPER_ENGINE=hermes`, `HERMES_URL`, `HERMES_API_KEY_FILE` and
+4. Start Hacksfield with `SUPER_ENGINE=hermes`, `HERMES_URL`, `HERMES_API_KEY_FILE` and
    `SUPER_ENGINE_TOKEN_FILE`.
 
-Both sides must reach each other: Parallax calls the agent, and the agent calls Parallax
+Both sides must reach each other: Hacksfield calls the agent, and the agent calls Hacksfield
 back. When they are on private machines, one SSH tunnel with a local and a remote forward
 does both: `deploy/tunnel.sh`. The full walk-through is
 [`docs/hermes-on-orgo.md`](../hermes-on-orgo.md).
@@ -573,12 +573,12 @@ engine.
 
 ### Read this before you point it at a personal agent
 
-- **The agent's own tools are not behind Parallax's approval cards.** A Hermes agent often
+- **The agent's own tools are not behind Hacksfield's approval cards.** A Hermes agent often
   has a shell, file access, a browser and its own connected accounts. A chat can ask it to
   use them. They show in the chat as a step with a name only, and nothing asks the member
   first. Use an agent whose tools you would hand to everyone who can open the chat: a
   separate Hermes home with a narrow toolset is the safe choice for anything public.
-- **The agent keeps the conversation.** Deleting a chat in Parallax does not delete it on
+- **The agent keeps the conversation.** Deleting a chat in Hacksfield does not delete it on
   the agent's side. An incognito chat tells the agent to save nothing, but the agent is not
   forced to obey.
 - **Limits.** `SUPER_TURN_MS` still ends a reply that runs too long. `SUPER_MAX_STEPS` does
@@ -598,7 +598,7 @@ engine.
 | `SUPER_ENGINE_TOKEN` or `SUPER_ENGINE_TOKEN_FILE` | | The token the agent sends to `/api/super/mcp`. At least 24 characters |
 | `SUPER_ENGINE_NAME` | `Hermes` | The name members see in the model picker |
 | `HERMES_MODEL` | `hermes-agent` | The `model` field sent to the agent |
-| `HERMES_MCP_NAME` | `parallax` | The name of the Parallax entry in the agent's `mcp_servers` |
+| `HERMES_MCP_NAME` | `parallax` | The name of the Hacksfield entry in the agent's `mcp_servers` |
 | `ANTHROPIC_API_KEY` | | Assistant model key (live only) |
 | `SUPER_LLM_MODEL` | `claude-opus-5-5` | The model used for `auto` |
 | `ORGO_API_KEY`, `ORGO_WORKSPACE_ID` | | Cloud computer key and workspace (live only) |

@@ -5,5 +5,6 @@ import { imageApps } from "./image";
 import { soonApps } from "./soon";
 import { templateApps } from "./templates";
 import { videoApps } from "./video";
+import { directByteplusApp } from "./byteplus";
 
-export const apps: AppDef[] = [...imageApps, ...videoApps, ...effectApps, ...templateApps, ...soonApps];
+export const apps: AppDef[] = [...imageApps, ...videoApps, ...effectApps, ...templateApps, ...soonApps].map(directByteplusApp);

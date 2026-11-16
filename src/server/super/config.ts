@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
  * and its own key is set; otherwise that one service runs as a mock.
  *
  * The assistant itself can also run on an outside engine: a Hermes agent (SUPER_ENGINE=hermes).
- * Then Hermes does the thinking and Parallax serves it our tools; see `hermes.ts`.
+ * Then Hermes does the thinking and Hacksfield serves it our tools; see `hermes.ts`.
  */
 
 export type Service = "llm" | "computer" | "connectors";
@@ -19,6 +19,7 @@ const KEYS: Record<Service, string> = {
 };
 
 export function serviceMode(service: Service): "live" | "mock" {
+  if (service === "llm" && process.env.PARALLAX_ASSISTANT_PROVIDER === "codex-subscription") return "live";
   if (service === "llm" && hermesEngine()) return "live";
   return process.env.SUPER_MODE === "live" && !!process.env[KEYS[service]] ? "live" : "mock";
 }
@@ -103,7 +104,12 @@ export const limits = {
 };
 
 /** The assistant's own model choices. `auto` lets the server pick. */
-export const LLM_MODELS = [
+export const LLM_MODELS = process.env.PARALLAX_ASSISTANT_PROVIDER === "codex-subscription" ? [
+  { id: "auto", name: "Auto (Astra)", description: "Uses your ChatGPT subscription through Hermes.", tier: "standard" },
+  { id: "gpt-6-astra", name: "GPT-6 Astra", description: "Reasoning and creative planning through your subscription.", tier: "high" },
+  { id: "gpt-6.1-sol", name: "GPT-6.1 Sol", description: "A capable subscription model.", tier: "medium" },
+  { id: "gpt-6.1-terra", name: "GPT-6.1 Terra", description: "Fast writing and everyday requests through your subscription.", tier: "low" },
+] as const : [
   { id: "auto", name: "Auto", description: "Picks the model for you.", tier: "standard" },
   { id: "claude-opus-5-5", name: "Claude Opus 5.5", description: "Strongest planning and tool use.", tier: "high" },
   { id: "claude-sonnet-5-5", name: "Claude Sonnet 5.5", description: "Fast and capable for everyday work.", tier: "medium" },
@@ -112,11 +118,11 @@ export const LLM_MODELS = [
 
 export function resolveLlmModel(setting: string): string {
   if (setting && setting !== "auto" && LLM_MODELS.some((m) => m.id === setting)) return setting;
-  return process.env.SUPER_LLM_MODEL || "claude-opus-5-5";
+  return process.env.SUPER_LLM_MODEL || (process.env.PARALLAX_ASSISTANT_PROVIDER === "codex-subscription" ? "gpt-6-astra" : "claude-opus-5-5");
 }
 
 export const MODES = [
-  { id: "ask", name: "Ask before generating", description: "Shows the model, prompt and price, and waits for your yes before spending credits." },
-  { id: "auto", name: "Generate without asking", description: "Starts generations straight away and spends credits as it goes." },
+  { id: "ask", name: "Ask before generating", description: "Shows the model, prompt and price, and waits for your yes before generation." },
+  { id: "auto", name: "Generate without asking", description: "Starts the generations you request straight away; provider usage charges apply." },
 ] as const;
 export type Mode = "ask" | "auto";

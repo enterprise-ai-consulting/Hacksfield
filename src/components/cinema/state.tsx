@@ -117,6 +117,7 @@ function useCinemaState() {
   const draftQuote = useSWR<Pick<Composed, "price">>(draftKey, fetcher, { keepPreviousData: true, shouldRetryOnError: false });
   /** What Generate will cost, in millicredits, or null while it is not known. */
   const price = (shot ? composed.data : draftQuote.data)?.price.total ?? null;
+  const providerPrice = (shot ? composed.data : draftQuote.data)?.price.providerCost ?? null;
 
   const report = useCallback((e: unknown) => {
     if (e instanceof ApiError) setProblem({ message: e.message, code: e.code, status: e.status });
@@ -274,6 +275,7 @@ function useCinemaState() {
     setCount,
     composed,
     price,
+    providerPrice,
     problem,
     setProblem,
     report,

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# A private pipe between Parallax (this machine) and the machine a Hermes agent runs on.
+# A private pipe between Hacksfield (this machine) and the machine a Hermes agent runs on.
 # Use it when the two are different machines. See docs/hermes-on-orgo.md.
 #
 #   deploy/tunnel.sh start     open it and keep it open
@@ -7,8 +7,8 @@
 #   deploy/tunnel.sh status    say whether each direction works (yes/no only)
 #
 # One SSH connection carries both directions:
-#   Parallax -> agent   this machine's 127.0.0.1:18642  reaches the agent's API on its 127.0.0.1:8642
-#   agent -> Parallax   the agent's 127.0.0.1:13100     reaches Parallax on this machine's 127.0.0.1:$APP_PORT
+#   Hacksfield -> agent   this machine's 127.0.0.1:18642  reaches the agent's API on its 127.0.0.1:8642
+#   agent -> Hacksfield   the agent's 127.0.0.1:13100     reaches Hacksfield on this machine's 127.0.0.1:$APP_PORT
 #
 # Nothing is opened to the internet on either side. It needs deploy/run/engine/ssh.conf: an
 # ssh config with a host named "agent" (HostName, Port, User, IdentityFile, UserKnownHostsFile).
@@ -20,9 +20,9 @@ CONF="$ENGINE_DIR/ssh.conf"
 PID_FILE="$ENGINE_DIR/tunnel.pid"
 LOG="$ENGINE_DIR/tunnel.log"
 LOCAL_PORT="${LOCAL_PORT:-18642}"     # this machine -> the agent's API
-REMOTE_PORT="${REMOTE_PORT:-13100}"   # the agent's machine -> Parallax
+REMOTE_PORT="${REMOTE_PORT:-13100}"   # the agent's machine -> Hacksfield
 AGENT_PORT="${AGENT_PORT:-8642}"      # the Hermes API server's port
-APP_PORT="${PORT:-3000}"              # the port Parallax listens on
+APP_PORT="${PORT:-3000}"              # the port Hacksfield listens on
 
 running() { [ -s "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2> /dev/null; }
 
@@ -64,13 +64,13 @@ case "${1:-status}" in
     if running; then echo "tunnel process: yes"; else echo "tunnel process: no"; fi
     # The agent's API answers /health without a key.
     code="$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1:$LOCAL_PORT/health" 2> /dev/null || true)"
-    if [ "$code" = "200" ]; then echo "Parallax -> agent: yes"; else echo "Parallax -> agent: no"; fi
+    if [ "$code" = "200" ]; then echo "Hacksfield -> agent: yes"; else echo "Hacksfield -> agent: no"; fi
     if [ -s "$CONF" ] && running; then
       back="$(ssh -F "$CONF" -o LogLevel=ERROR -o ConnectTimeout=8 agent \
         "curl -s -o /dev/null -m 5 -w '%{http_code}' http://127.0.0.1:$REMOTE_PORT/api/auth/me" 2> /dev/null || true)"
-      if [ "$back" = "200" ]; then echo "agent -> Parallax: yes"; else echo "agent -> Parallax: no"; fi
+      if [ "$back" = "200" ]; then echo "agent -> Hacksfield: yes"; else echo "agent -> Hacksfield: no"; fi
     else
-      echo "agent -> Parallax: no"
+      echo "agent -> Hacksfield: no"
     fi
     ;;
   *)

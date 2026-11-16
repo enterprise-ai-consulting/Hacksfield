@@ -12,6 +12,7 @@ import {
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { LoginDialog } from "@/components/entry/login-dialog";
 import { formatCredits } from "@/config/economy";
+import { generationPrice, personalInstallation } from "@/config/installation";
 import { remixCopy, remixModes, type RemixModeId } from "@/content/remix";
 import { routes } from "@/content/site";
 import type { Asset } from "@/lib/api";
@@ -541,7 +542,7 @@ export function RemixForm({
             aria-disabled={blocked || undefined}
             aria-label={
               studio.quote
-                ? `${copy.generate}, ${formatCredits(studio.quote.millicredits)} credits`
+                ? `${copy.generate}, ${personalInstallation ? generationPrice(studio.quote) : `${formatCredits(studio.quote.millicredits)} credits`}`
                 : copy.generate
             }
             className={cn(
@@ -562,7 +563,7 @@ export function RemixForm({
                     strokeWidth={1.5}
                     aria-hidden
                   />
-                  {formatCredits(studio.quote.millicredits)}
+                  {personalInstallation ? generationPrice(studio.quote) : formatCredits(studio.quote.millicredits)}
                 </span>
               ) : null}
             </span>

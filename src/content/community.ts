@@ -1,6 +1,6 @@
 /**
  * The words and lists of the Community, post, profile and contest screens. Layout comes from
- * the design; every word here is Parallax's own.
+ * the design; every word here is Hacksfield's own.
  */
 
 export const communityWords = {

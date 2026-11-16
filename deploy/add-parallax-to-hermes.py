@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Give a Hermes agent Parallax's tools: add the `parallax` MCP server to its config.yaml.
+"""Give a Hermes agent Hacksfield's tools: add the `parallax` MCP server to its config.yaml.
 
 Run it on the agent's machine, with the Python that Hermes uses (it needs PyYAML):
 
@@ -7,7 +7,7 @@ Run it on the agent's machine, with the Python that Hermes uses (it needs PyYAML
         [--url http://127.0.0.1:13100/api/super/mcp]
         [--config ~/.hermes/config.yaml] [--name parallax] [--remove] [--dry-run]
 
-The token file holds the same value as Parallax's SUPER_ENGINE_TOKEN. It is written into the
+The token file holds the same value as Hacksfield's SUPER_ENGINE_TOKEN. It is written into the
 config file (which already holds the agent's other secrets) and is never printed.
 
 The edit is plain text, so the file's comments and layout stay as they are. A dated copy of

@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect } from "react";
 import { LogoMark } from "@/components/brand/logo";
 import { brand } from "@/config/brand";
+import { personalInstallation } from "@/config/installation";
 import { promo } from "@/content/site";
 import { useNow } from "@/lib/browser";
 import { closeForGood, hideNow } from "@/lib/closable";
@@ -47,7 +48,7 @@ export function PromoBanner() {
     if (over) hideNow("promo");
   }, [over]);
 
-  if (!promo.enabled) return null;
+  if (personalInstallation || !promo.enabled) return null;
 
   const days = left === null ? null : Math.floor(left / 86400);
   const hours = left === null ? null : Math.floor((left % 86400) / 3600);

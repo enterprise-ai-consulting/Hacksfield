@@ -3,7 +3,7 @@ import type { BrandData, ProductData } from "./types";
 /**
  * Ad copy: headlines, captions and calls to action, plus spoken-ad scripts.
  *
- * There is no language model in Parallax yet, so the writer behind `CopyWriter` fills
+ * There is no language model in Hacksfield yet, so the writer behind `CopyWriter` fills
  * templates from the product and brand fields. A model-backed writer can replace it by
  * implementing the same interface and changing `copyWriter()`.
  */

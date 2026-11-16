@@ -329,7 +329,7 @@ export function CinemaBanner() {
   );
 }
 
-/** Every place in Parallax, as grey chips. */
+/** Every place in Hacksfield, as grey chips. */
 export function MoreFeatures() {
   return (
     <section

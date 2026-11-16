@@ -46,6 +46,8 @@ export interface AdFormat {
   spoken: boolean;
   available: boolean;
   pricePerAd: number | null;
+  providerUsd: number | null;
+  metered: boolean;
 }
 
 export type AdStatus = "waiting" | "running" | "succeeded" | "failed" | "canceled";

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stops the Parallax server that deploy/start.sh started.
+# Stops the Hacksfield server that deploy/start.sh started.
 set -uo pipefail
 
 RUN_DIR="$(cd "$(dirname "$0")" && pwd)/run"

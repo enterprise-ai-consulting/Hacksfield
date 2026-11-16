@@ -195,7 +195,7 @@ export async function sendTest(userId: string, webhookId: string) {
   const hook = ownedWebhook(userId, webhookId);
   const id = newId("dlv");
   const now = Date.now();
-  const payload = { id, type: TEST_EVENT, createdAt: now, data: { message: "This is a test event from Parallax." } };
+  const payload = { id, type: TEST_EVENT, createdAt: now, data: { message: "This is a test event from Hacksfield." } };
   run(
     `INSERT INTO dev_webhook_deliveries (id, webhook_id, user_id, event, job_id, payload, status, next_attempt_at, created_at)
      VALUES (?, ?, ?, ?, NULL, ?, 'pending', ?, ?)`,
@@ -246,7 +246,7 @@ function post(urlText: string, body: string, headers: Record<string, string>): P
       url,
       {
         method: "POST",
-        headers: { ...headers, "Content-Type": "application/json", "Content-Length": String(Buffer.byteLength(body)), "User-Agent": "Parallax-Webhooks/1" },
+        headers: { ...headers, "Content-Type": "application/json", "Content-Length": String(Buffer.byteLength(body)), "User-Agent": "Hacksfield-Webhooks/1" },
         lookup: guardedLookup(local),
         timeout: TIMEOUT_MS,
       },
@@ -271,10 +271,10 @@ async function attempt(d: DeliveryRow) {
   let error: string | null = null;
   try {
     status = await post(hook.url, d.payload, {
-      "Parallax-Webhook-Id": d.id,
-      "Parallax-Webhook-Event": d.event,
-      "Parallax-Webhook-Timestamp": String(ts),
-      "Parallax-Webhook-Signature": sign(hook.secret, ts, d.payload),
+      "Hacksfield-Webhook-Id": d.id,
+      "Hacksfield-Webhook-Event": d.event,
+      "Hacksfield-Webhook-Timestamp": String(ts),
+      "Hacksfield-Webhook-Signature": sign(hook.secret, ts, d.payload),
     });
     if (status < 200 || status >= 300) error = `The endpoint answered ${status}.`;
   } catch (err) {

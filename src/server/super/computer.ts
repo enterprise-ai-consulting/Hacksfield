@@ -175,7 +175,7 @@ export interface ComputerStatus {
   status: "none" | ComputerRow["status"];
   lastUsedAt: number | null;
   screenshotAt: number | null;
-  /** Latest screenshot, served by Parallax. Null until the first one. */
+  /** Latest screenshot, served by Hacksfield. Null until the first one. */
   screenshotUrl: string | null;
 }
 

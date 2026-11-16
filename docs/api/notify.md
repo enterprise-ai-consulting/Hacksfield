@@ -317,7 +317,7 @@ The empty state of the search box. Works signed out (then only `popularModels`).
 }
 ```
 
-`popularModels`: up to 6 available models, most used across Parallax in the last 30 days, then
+`popularModels`: up to 6 available models, most used across Hacksfield in the last 30 days, then
 featured ones. `recentItems`: the member's 6 newest files. `recentSearches`: up to 8.
 
 ## GET /api/search/recent
@@ -435,6 +435,6 @@ All member tables reference `users(id) ON DELETE CASCADE`. No core table is alte
    the search index update at once instead of within a minute. Alternatively, allow this
    feature to add `AFTER INSERT/UPDATE/DELETE` triggers on `assets` that maintain
    `notify_assets_fts` (not done, because it attaches behaviour to a core table).
-5. **Multi-process.** The live stream fans out in one Node process. If Parallax ever runs
+5. **Multi-process.** The live stream fans out in one Node process. If Hacksfield ever runs
    several app servers, it needs a shared channel; until then streams on other processes still
    catch up through the 3 s re-check, only for job and credit notices.

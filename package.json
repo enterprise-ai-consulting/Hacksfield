@@ -1,18 +1,22 @@
 {
-  "name": "parallax",
+  "name": "hacksfield",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --hostname 127.0.0.1",
     "lint": "eslint",
     "check:registry": "tsx scripts/check-registry.ts",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "python3 tests/run.py $(ls tests/*.py tests/ui/*.mjs | grep -v -e tests/run.py -e browser.mjs)"
+    "test": "python3 tests/run.py $(ls tests/*.py tests/ui/*.mjs | grep -v -e tests/run.py -e browser.mjs)",
+    "test:unit": "node --conditions=react-server --import tsx --test tests/*.test.ts",
+    "test:api": "python3 tests/run.py tests/developer.py tests/personal_byteplus.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
+    "@aws-sdk/client-s3": "3.1169.0",
+    "@aws-sdk/s3-request-presigner": "3.1169.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.72.0",
     "next": "16.4.6",
@@ -35,5 +39,16 @@
     "typescript": "^5"
   },
   "license": "MIT",
-  "description": "An open-source AI image, video and audio studio, with an agent chat that can run on a Hermes agent."
+  "description": "Membership-free, self-hosted AI creative studio with direct BytePlus and Decart integrations. Derived from Parallax (MIT).",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enterprise-ai-consulting/Hacksfield.git"
+  },
+  "homepage": "https://github.com/enterprise-ai-consulting/Hacksfield#readme",
+  "bugs": {
+    "url": "https://github.com/enterprise-ai-consulting/Hacksfield/issues"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
 }

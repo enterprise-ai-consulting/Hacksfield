@@ -6,9 +6,14 @@
 import { musicModels, speechModels } from "./audio";
 import { imageModels } from "./image";
 import { videoModels } from "./video";
+import { byteplusModels } from "./byteplus";
+import { latestByteplusModels } from "./byteplus-latest";
+import { localVideoModels } from "./local-video";
+import { decartModels } from "./decart";
+import { generationProvider } from "../config/installation";
 import type { ModelDef } from "./types";
 
-export const models: ModelDef[] = [...imageModels, ...videoModels, ...speechModels, ...musicModels];
+export const models: ModelDef[] = [...imageModels, ...videoModels, ...speechModels, ...musicModels, ...latestByteplusModels, ...byteplusModels, ...localVideoModels, ...decartModels];
 
 const byId = new Map(models.map((m) => [m.id, m]));
 
@@ -18,7 +23,10 @@ export function getModel(id: string | null | undefined): ModelDef | undefined {
 
 /** Models for one studio or tool, in display order. */
 export function modelsFor(surface: string): ModelDef[] {
-  return models.filter((m) => m.surfaces.includes(surface));
+  const list = models.filter((m) => m.surfaces.includes(surface));
+  if (generationProvider !== "byteplus") return list.filter((m) => !m.id.startsWith("byteplus-"));
+  const direct = list.filter((m) => m.id.startsWith("byteplus-") || m.id.startsWith("decart-"));
+  return direct.length ? direct : list.map((m) => ({ ...m, status: "offline", statusNote: "This model requires a Treg provider key. Use the native BytePlus models for this installation." }));
 }
 
 /** The model a surface opens on: the first featured one that can run. */

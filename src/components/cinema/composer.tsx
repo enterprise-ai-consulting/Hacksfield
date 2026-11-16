@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { VendorGlyph } from "@/components/brand/logo";
+import { personalInstallation } from "@/config/installation";
 import { formatCredits, MAX_BATCH } from "@/config/economy";
 import { cinema } from "@/content/cinema";
 import { Artwork, MenuItem, MenuLabel, Popover, PopoverContent, PopoverTrigger, cn } from "@/ui";
@@ -335,14 +336,14 @@ function Toolbar() {
 }
 
 function GenerateButton({ onGenerate }: { onGenerate: () => void }) {
-  const { busy, price: millicredits } = useCinema();
-  const price = millicredits === null ? null : formatCredits(millicredits);
+  const { busy, price: millicredits, providerPrice } = useCinema();
+  const price = personalInstallation ? providerPrice : millicredits === null ? null : formatCredits(millicredits);
   return (
     <button
       type="button"
       disabled={busy}
       onClick={onGenerate}
-      aria-label={price ? `${c.generate}, ${price} ${cinema.account.credits}` : c.generate}
+      aria-label={price ? `${c.generate}, ${price} ${personalInstallation ? "provider estimate" : cinema.account.credits}` : c.generate}
       className="relative flex h-12 w-full shrink-0 justify-center overflow-clip rounded-xl bg-brand pt-[7px] shadow-lime-deep transition-[filter] duration-150 hover:brightness-105 active:brightness-90 disabled:cursor-progress sm:h-20 sm:w-[128px] sm:pt-[22px]"
     >
       <span aria-hidden className="pointer-events-none absolute inset-0 overflow-clip rounded-[14px] border-b-[3px] border-b-[#D9D9D90A]">

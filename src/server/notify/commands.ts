@@ -35,12 +35,12 @@ const OWN: Command[] = [
   c({ id: "notifications", type: "go", group: "Account", label: "Notifications", hint: "What happened while you were away", href: "/notifications", keywords: ["alerts", "inbox", "bell"], audience: "member" }),
   c({ id: "notification-settings", type: "go", group: "Account", label: "Notification settings", hint: "Choose what you hear about", href: "/settings/notifications", keywords: ["preferences", "mute"], audience: "member" }),
   c({ id: "wallet", type: "go", group: "Account", label: "Credits", hint: "Balance, history and top-ups", href: "/wallet", keywords: ["wallet", "balance", "top up", "buy"], audience: "member" }),
-  c({ id: "whats-new", type: "go", group: "Account", label: "What's new", hint: "Recent changes to Parallax", href: "/whats-new", keywords: ["changelog", "updates", "news"] }),
+  c({ id: "whats-new", type: "go", group: "Account", label: "What's new", hint: "Recent changes to Hacksfield", href: "/whats-new", keywords: ["changelog", "updates", "news"] }),
   c({ id: "upload", type: "action", group: "Actions", label: "Upload a file", hint: "Add an image, video or audio file", href: "/library?upload=1", keywords: ["import", "add"], shortcut: "U", audience: "member" }),
   c({ id: "mark-all-read", type: "action", group: "Actions", label: "Mark all notifications read", hint: "Clear the unread badge", api: { method: "POST", path: "/api/notifications/read", body: { all: true } }, keywords: ["clear", "dismiss"], audience: "member" }),
   c({ id: "clear-searches", type: "action", group: "Actions", label: "Clear recent searches", hint: "Forget what you searched for", api: { method: "DELETE", path: "/api/search/recent", body: null }, keywords: ["history", "forget"], audience: "member" }),
   c({ id: "sign-out", type: "action", group: "Actions", label: "Sign out", hint: "End this session", href: "/", api: { method: "POST", path: "/api/auth/logout", body: null }, keywords: ["log out", "logout"], audience: "member" }),
-  c({ id: "sign-in", type: "go", group: "Actions", label: "Sign in", hint: "Use your Parallax account", href: "/login", keywords: ["log in", "login", "account"], audience: "visitor" }),
+  c({ id: "sign-in", type: "go", group: "Actions", label: "Sign in", hint: "Use your Hacksfield account", href: "/login", keywords: ["log in", "login", "account"], audience: "visitor" }),
   c({ id: "try-as-guest", type: "action", group: "Actions", label: "Try without an account", hint: "Start as a guest with free credits", api: { method: "POST", path: "/api/auth/guest", body: null }, keywords: ["guest", "demo"], audience: "visitor" }),
 ];
 

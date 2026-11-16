@@ -1,4 +1,5 @@
 "use client";
+import { personalInstallation } from "@/config/installation";
 
 import { ArrowDownWideNarrow, Clapperboard, Crown, Ellipsis, FolderOpen, LayoutGrid, LogIn, PanelLeft, Plus, Search, Users, X } from "lucide-react";
 import Link from "next/link";
@@ -396,26 +397,26 @@ export function Sidebar({ onCollapse, onNavigate }: { onCollapse: () => void; on
 
       <div className="flex shrink-0 flex-col gap-1 border-t border-border-subtle px-2 pt-[9px] pb-2">
         <Link
-          href={routes.pricing}
+          href={personalInstallation ? "/settings/provider" : routes.pricing}
           className="flex h-9 items-center gap-3 rounded-xl bg-[#FF005B0F] pl-[10px] text-sm leading-5 font-medium text-text-primary transition-colors duration-150 hover:bg-[#FF005B1F]"
         >
           <Crown className="size-4 fill-promo text-promo" strokeWidth={1.5} aria-hidden />
-          <span className="w-[78px]">{cinema.account.pricing}</span>
+          <span className="min-w-0 flex-1">{personalInstallation ? "Generation settings" : cinema.account.pricing}</span>
           <span
             className="flex h-[15px] items-center rounded-[2px] px-1 font-display text-xs leading-[14px] font-bold text-text-primary uppercase"
             style={{ backgroundImage: "radial-gradient(ellipse 39.43% 136.54% at 51.64% 117.31%, #EE4596 0%, #ED2D84 50%, #ED1572 100%)" }}
           >
-            {pricingBadge}
+            {personalInstallation ? "Personal" : pricingBadge}
           </span>
         </Link>
         {session.member ? (
           <Link
-            href={routes.wallet}
+            href={personalInstallation ? "/settings/provider" : routes.wallet}
             className="flex h-9 items-center gap-3 rounded-xl border border-border-default pl-[11px] text-sm leading-5 font-medium text-text-primary transition-colors duration-150 hover:bg-border-subtle"
           >
             <span className="min-w-0 flex-1 truncate">{session.member.name || session.member.email}</span>
             <span className="pr-3 font-mono text-xs text-text-secondary">
-              {formatCredits(session.balance)} {cinema.account.credits}
+              {personalInstallation ? "No membership" : `${formatCredits(session.balance)} ${cinema.account.credits}`}
             </span>
           </Link>
         ) : (

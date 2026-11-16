@@ -2,7 +2,7 @@ import "server-only";
 
 import { catalogEndpoint, readPath } from "@/registry/quote";
 import type { MediaType } from "@/registry/types";
-import { sniff, wavFromPcm } from "./media";
+import { extractSoundtrack, sniff, wavFromPcm } from "./media";
 import { downloadResult, providerMessage, taskBody, tidy, tregCall, type TregReply, type TregTask } from "./treg";
 
 /**
@@ -122,10 +122,16 @@ async function fetchResult(endpointId: string, task: TregTask, body: unknown): P
 
 /** Files from a finished asynchronous call. */
 export async function mediaFromTask(endpointId: string, task: TregTask, want: MediaType, limit: number): Promise<Buffer[]> {
+  if (endpointId.startsWith("byteplus.music.seedance-")) {
+    const videos = await mediaFromTask("byteplus.video.seedance-2-0", task, "video", 1);
+    try { return [await extractSoundtrack(videos[0])]; }
+    catch (err) { throw new ResultError(err instanceof Error ? err.message : "The soundtrack could not be extracted."); }
+  }
   const body = taskBody(task);
   const rule = catalogEndpoint(endpointId)?.async;
   const files = await firstThatYields(
     [
+      () => task.bytes,
       () => task.result,
       () => task.result_url,
       () => fetchResult(endpointId, task, body),

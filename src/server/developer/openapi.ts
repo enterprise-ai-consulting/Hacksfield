@@ -160,10 +160,10 @@ export function openApiDocument(origin: string) {
   return {
     openapi: "3.1.0",
     info: {
-      title: "Parallax API",
+      title: "Hacksfield API",
       version: "1.0.0",
       description:
-        "Make images, video and audio with Parallax from your own code. Authenticate with `Authorization: Bearer <key>`; create keys in your account. " +
+        "Make images, video and audio with Hacksfield from your own code. Authenticate with `Authorization: Bearer <key>`; create keys in your account. " +
         "Credit amounts are millicredits (1000 = 1 credit). Times are Unix milliseconds. Every response carries X-RateLimit-Limit, X-RateLimit-Remaining and X-RateLimit-Reset.",
     },
     servers: [{ url: `${origin}/api` }],

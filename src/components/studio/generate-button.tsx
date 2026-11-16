@@ -2,6 +2,7 @@
 
 import { LoaderCircle, Sparkles } from "lucide-react";
 import { formatCredits } from "@/config/economy";
+import { generationPrice, personalInstallation } from "@/config/installation";
 import type { Studio } from "@/lib/studio";
 
 /**
@@ -10,13 +11,13 @@ import type { Studio } from "@/lib/studio";
  * way a spinner takes the price's place.
  */
 export function GenerateButton({ studio, label = "Generate" }: { studio: Studio; label?: string }) {
-  const price = studio.quote ? formatCredits(studio.quote.millicredits) : null;
+  const price = studio.quote ? personalInstallation ? generationPrice(studio.quote) : formatCredits(studio.quote.millicredits) : null;
   return (
     <button
       type="button"
       disabled={studio.busy}
       aria-disabled={studio.blocker ? true : undefined}
-      aria-label={price ? `${label}, ${price} credits` : label}
+      aria-label={price ? `${label}, ${price}${personalInstallation ? " provider cost" : " credits"}` : label}
       onClick={() => void studio.generate()}
       className="relative flex h-12 w-full shrink-0 items-center justify-center overflow-clip rounded-xl bg-brand pb-[2px] shadow-lime-deep transition-[filter] duration-150 hover:brightness-105 active:brightness-90 disabled:cursor-progress sm:h-20 sm:w-[120px]"
     >

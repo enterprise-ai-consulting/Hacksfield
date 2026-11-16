@@ -3,10 +3,11 @@ import "server-only";
 import { newId, run } from "@/server/db";
 import { ApiError } from "@/server/errors";
 import type { Interval } from "./plans";
+import { isPersonalMode } from "../provider-settings";
 
 /**
  * Billing sits behind this interface so a real payment provider can replace the demo one
- * without touching plan logic. There is no real provider in Parallax: the `demo` provider
+ * without touching plan logic. There is no real provider in Hacksfield: the `demo` provider
  * approves every charge at once and writes a receipt. No card data exists anywhere.
  */
 
@@ -51,7 +52,7 @@ export const demoProvider: BillingProvider = {
 };
 
 export function demoBillingOn(): boolean {
-  return process.env.PARALLAX_DEMO_BILLING !== "off";
+  return !isPersonalMode() && process.env.PARALLAX_DEMO_BILLING !== "off";
 }
 
 /** The provider in use, or null when billing is closed. */

@@ -1,4 +1,4 @@
-# Building screens for Parallax
+# Building screens for Hacksfield
 
 This page is for people and agents building or changing a screen. Read it before you write
 code, together with `AGENTS.md` (this is Next.js 16 and it differs from older versions) and the
@@ -14,7 +14,7 @@ A screen has three sources. Each answers one question.
 
 ## 1. The design
 
-Parallax was built from a design file that is not part of this repository. What it defined
+Hacksfield was built from a design file that is not part of this repository. What it defined
 lives in the code: the tokens in `src/app/globals.css` (section 3), the shared controls in
 `src/ui/`, and the finished screens. A new screen should look like it was drawn with the rest.
 
@@ -26,7 +26,7 @@ lives in the code: the tokens in `src/app/globals.css` (section 3), the shared c
 
 ### Content is always our own
 
-Parallax is its own product. Whatever you use as a reference, it gives you layout and
+Hacksfield is its own product. Whatever you use as a reference, it gives you layout and
 style, never content:
 
 | Never copy | Use instead |
@@ -271,7 +271,7 @@ returns. For your feature's shapes, write types in your own files from the API p
   Name each slot `<your feature>/<what it is>` and give it a size with `className`. Until a
   picture exists for the name, the slot is a soft gradient that is different for each name.
   A picture is added by name in `src/content/media.ts`, with its file under `public/media/`.
-  Every file there must be your own work or made with Parallax.
+  Every file there must be your own work or made with Hacksfield.
 - Do not load pictures, video or fonts from another site. Never hotlink. A page must look
   finished with gradient slots.
 

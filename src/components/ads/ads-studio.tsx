@@ -65,7 +65,7 @@ export function AdsStudio() {
   const product = products.find((p) => p.id === productId) ?? null;
   const chosen = formats.filter((f) => formatIds.includes(f.id));
   const price = chosen.length
-    ? { total: chosen.reduce((sum, f) => sum + (f.pricePerAd ?? 0), 0) * variations, approx: chosen.some((f) => f.spoken) }
+    ? { total: chosen.reduce((sum, f) => sum + (f.pricePerAd ?? 0), 0) * variations, usd: chosen.reduce((sum, f) => sum + (f.providerUsd ?? 0), 0) * variations, approx: chosen.some((f) => f.spoken || f.metered) }
     : null;
 
 

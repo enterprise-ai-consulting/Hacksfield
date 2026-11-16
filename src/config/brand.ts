@@ -1,14 +1,13 @@
 /**
- * Everything that names the product lives here, so a rename is a one-file change.
- * This is an original brand. It reuses no name, logo, copy or artwork from any other product.
+ * Shared product identity. Hacksfield is derived from the MIT-licensed Parallax studio.
  */
 export const brand = {
-  name: "Parallax",
-  tagline: "One studio for every generative model.",
+  name: "Hacksfield",
+  tagline: "Your studio. Your providers. No membership fee.",
   description:
-    "An open-source creative studio. Pick a model, set the shot, see the price before you press Generate.",
+    "A membership-free creative studio with direct BytePlus and Decart connections. Bring your own provider accounts and control your spending.",
   /** Shown in the footer and the About dialog. */
-  repoUrl: "",
+  repoUrl: "https://github.com/enterprise-ai-consulting/Hacksfield",
   creditName: "credit",
   creditNamePlural: "credits",
 } as const;

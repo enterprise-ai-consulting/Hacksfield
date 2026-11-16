@@ -3,7 +3,7 @@
 export const appsCopy = {
   title: "Apps",
   headingLead: "Welcome to",
-  headingBrand: "Parallax apps",
+  headingBrand: "Hacksfield apps",
   intro: "Small tools that do one thing well: fill a short form, press Run, get a picture, a clip or a sound.",
   searchLabel: "Search apps",
   searchPlaceholder: "Search",

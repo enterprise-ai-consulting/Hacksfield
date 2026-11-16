@@ -5,7 +5,6 @@ import useSWR, { mutate as mutateCache } from "swr";
 import {
   clampCount,
   defaultModel,
-  getModel,
   modelsFor,
   quoteJob,
   resolveValues,
@@ -180,7 +179,7 @@ export function useStudio(surface: string): Studio {
   const error = failure?.message ?? null;
 
   const onSurface = (id: string | null) => {
-    const m = getModel(id);
+    const m = models.find((candidate) => candidate.id === id);
     return m && m.surfaces.includes(surface) ? m : undefined;
   };
   const model = onSurface(picked) ?? onSurface(fromAddress) ?? defaultModel(surface);

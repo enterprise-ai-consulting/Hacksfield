@@ -1,6 +1,8 @@
 import "server-only";
+import { isPersonalMode } from "../provider-settings";
 
-import { formatCredits, planOf } from "@/config/economy";
+import { formatCredits } from "@/config/economy";
+import { generationPlan } from "../generation-limits";
 import { userById, type User } from "@/server/auth";
 import { balance } from "@/server/credits";
 import { all, get, newId, run, tx } from "@/server/db";
@@ -59,7 +61,7 @@ export function quoteBatch(user: User, projectId: string, modelId?: unknown) {
   const model = batchModel(project.image_model_id, modelId);
   const shots = missingStills(projectId).map((s) => {
     const q = quotePlan(planTake(user.id, s.id, { mode: "still", modelId: model }));
-    return { shotId: s.id, millicredits: q.millicredits };
+    return { shotId: s.id, millicredits: q.millicredits, usd: q.usd };
   });
   const total = shots.reduce((n, s) => n + s.millicredits, 0);
   const have = balance(user.id);
@@ -68,9 +70,10 @@ export function quoteBatch(user: User, projectId: string, modelId?: unknown) {
     shots,
     count: shots.length,
     total,
+    providerCost: `$${shots.reduce((n, s) => n + s.usd, 0).toFixed(3)}`,
     balance: have,
-    affordable: have >= total,
-    concurrency: planOf(user.plan).concurrency,
+    affordable: isPersonalMode() || have >= total,
+    concurrency: generationPlan(user.plan).concurrency,
   };
 }
 
@@ -168,7 +171,7 @@ function pumpBatch(b: BatchRow) {
   if (!user || !get("SELECT 1 FROM cinema_projects WHERE id = ?", b.project_id)) {
     for (const it of waiting) setItem(it.id, "canceled", null);
   } else {
-    let free = planOf(user.plan).concurrency - activeJobs(user.id);
+    let free = generationPlan(user.plan).concurrency - activeJobs(user.id);
     for (const it of waiting) {
       if (free <= 0) break;
       const shot = get<ShotRow>("SELECT * FROM cinema_shots WHERE id = ? AND user_id = ?", it.shot_id, user.id);

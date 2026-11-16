@@ -1,4 +1,4 @@
-"""End-to-end check of the Parallax API in mock mode. Usage: e2e.py <base-url>"""
+"""End-to-end check of the Hacksfield API in mock mode. Usage: e2e.py <base-url>"""
 import http.cookiejar
 import json
 import sys
@@ -131,7 +131,7 @@ if vassets:
         check("video: poster serves", s == 200 and payload[:2] == b"\xff\xd8", f"{s} {len(payload)} bytes")
 
 # --- speech -----------------------------------------------------------------
-s, out = call("POST", "/api/jobs", {"modelId": "minimax-speech-2.8-turbo", "prompt": "Hello from Parallax. This is a test of speech."})
+s, out = call("POST", "/api/jobs", {"modelId": "minimax-speech-2.8-turbo", "prompt": "Hello from Hacksfield. This is a test of speech."})
 done = wait_jobs([j["id"] for j in out.get("jobs", [])])
 aassets = [a for j in done for a in j.get("assets", [])]
 check("speech: succeeded", s == 200 and bool(done) and all(j["status"] == "succeeded" for j in done) and len(aassets) == 1, f"{s} {str(out)[:200] if s != 200 else [(j.get('status'), j.get('error')) for j in done]}")

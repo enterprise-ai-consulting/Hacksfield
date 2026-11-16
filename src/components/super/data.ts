@@ -62,6 +62,7 @@ export function useDemoHint(page?: string): string | null {
   if (!data) return null;
   const s = data.services ?? {};
   if (s.llm !== "live") return copy.demoHint;
+  if (data.billing === "subscription") return page === "connectors" && s.connectors !== "live" ? copy.demoConnectors : null;
   const computer = s.computer !== "live";
   const connectors = s.connectors !== "live";
   // An outside engine is never handed a stand-in service, so only that service's own page is a demo.

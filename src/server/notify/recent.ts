@@ -53,7 +53,7 @@ export function removeRecent(userId: string, id: string) {
 }
 
 /**
- * The empty state of the search box: popular models (most used across Parallax in the
+ * The empty state of the search box: popular models (most used across Hacksfield in the
  * last 30 days, topped up with featured ones), plus the member's recent files and searches.
  */
 export function suggestions(userId: string | null) {

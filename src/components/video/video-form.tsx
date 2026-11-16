@@ -1,4 +1,5 @@
 "use client";
+import { generationPrice, personalInstallation } from "@/config/installation";
 
 import {
   AudioLines,
@@ -570,20 +571,21 @@ function GenerateBar({
   onSignIn: () => void;
   onGenerate: () => void;
 }) {
-  const price = studio.quote ? formatCredits(studio.quote.millicredits) : null;
-  const label = signedOut ? t.signIn : t.generate;
+  const price = studio.quote ? personalInstallation ? generationPrice(studio.quote) : formatCredits(studio.quote.millicredits) : null;
+  const needsSignIn = signedOut && !personalInstallation;
+  const label = needsSignIn ? t.signIn : t.generate;
   return (
     <button
       type="button"
       disabled={studio.busy}
       data-generate
       aria-disabled={studio.blocker ? true : undefined}
-      aria-label={price && !signedOut ? `${label}, ${price} credits` : label}
-      onClick={() => (signedOut ? onSignIn() : onGenerate())}
+      aria-label={price && !needsSignIn ? `${label}, ${price}${personalInstallation ? " provider reservation" : " credits"}` : label}
+      onClick={() => (needsSignIn ? onSignIn() : onGenerate())}
       className="flex h-12 w-full shrink-0 items-start justify-center gap-2 overflow-clip rounded-xl bg-brand bg-[radial-gradient(circle_farthest-corner_at_50%_50%,#EFFE17_40%,#D1FE17_100%)] pt-[11px] [box-shadow:#0000006E_0px_-3px_0px_inset] transition-[filter] duration-150 hover:brightness-105 active:brightness-90 disabled:cursor-progress"
     >
       <span className="text-sm leading-5 font-semibold text-ink">{label}</span>
-      {signedOut ? null : (
+      {needsSignIn ? null : (
         <span className="flex h-5 items-center gap-[2px] text-sm leading-5 font-medium text-ink/70">
           {studio.busy ? (
             <LoaderCircle
@@ -666,10 +668,10 @@ export function VideoForm({
   const [picking, setPicking] = useState(false);
   const wide = useWide();
   const avatarMode = isAvatar(studio.model);
-  const listed = studio.models.filter(
+  const edits = editModels(studio.models);
+  const listed = tab === "edit" ? edits : studio.models.filter(
     (m) => isAvatar(m) === avatarMode && !editModels([m]).length,
   );
-  const edits = editModels(studio.models);
   const clipDefault = studio.models.find(
     (m) => !isAvatar(m) && m.status === "available" && !editModels([m]).length,
   );
@@ -709,7 +711,17 @@ export function VideoForm({
               type="button"
               role="tab"
               aria-selected={on}
-              onClick={() => onTab(item.id)}
+              onClick={() => {
+                if (item.id === "edit" && !edits.some(m => m.id === studio.model?.id)) {
+                  setLastClip(studio.model?.id ?? null);
+                  const first = edits.find(m => m.status === "available");
+                  if (first) studio.pickModel(first.id);
+                } else if (item.id === "create" && edits.some(m => m.id === studio.model?.id)) {
+                  const back = lastClip ?? clipDefault?.id;
+                  if (back) studio.pickModel(back);
+                }
+                onTab(item.id);
+              }}
               className={cn(
                 "flex h-9 shrink-0 items-start text-sm leading-5 font-medium transition-colors duration-150",
                 on
@@ -723,7 +735,7 @@ export function VideoForm({
         })}
       </div>
 
-      {tab === "edit" ? (
+      {tab === "edit" && !edits.some(m => m.status === "available") ? (
         <div className="flex w-full flex-1 flex-col gap-4 p-2">
           <ModelCard model={edits[0]} />
           <div className="flex flex-col gap-2 rounded-xl bg-border-subtle px-3 py-4">
@@ -766,7 +778,7 @@ export function VideoForm({
         <>
           <div className="scroll-quiet flex w-full min-h-0 flex-1 flex-col gap-2 px-2 pt-2 lg:overflow-y-auto">
             <ModelCard model={studio.model} onChange={() => setPicking(true)} />
-            {avatarModel ? (
+            {avatarModel && tab === "create" ? (
               <div className="mt-2">
                 <Segmented
                   label="Kind of video"

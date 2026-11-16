@@ -1,4 +1,5 @@
 "use client";
+import { personalInstallation } from "@/config/installation";
 
 import { Bell, ChevronRight, CircleHelp, Coins, Gift, KeyRound, LogOut, MonitorSmartphone, SlidersHorizontal, Trash2, UserRound, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -76,6 +77,7 @@ function CreditsCard() {
   const plan = planOf(user?.plan);
   const allowance = (plan.monthlyCredits > 0 ? plan.monthlyCredits : SIGNUP_CREDITS) * 1000;
   const pct = Math.max(0, Math.min(100, Math.round((balance / allowance) * 100)));
+  if (personalInstallation) return <Link href="/settings/provider" className="rounded-xl bg-border-subtle p-4 text-sm font-medium text-brand">Generation settings</Link>;
   return (
     <section aria-label={walletCopy.balance} className="flex flex-col rounded-2xl bg-border-subtle px-3 pt-3 pb-1">
       <Link href={routes.wallet} className="flex h-5 shrink-0 items-center gap-[6px] rounded-sm">
@@ -119,7 +121,7 @@ function SidePanel({ page }: { page: AccountPage }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const name = user ? user.name || user.handle || user.email || "" : "";
-  const planLabel = user ? (user.isGuest ? accountNav.guestPlan : `${planOf(user.plan).name} ${accountNav.planSuffix}`) : "";
+  const planLabel = personalInstallation ? "Personal installation" : user ? (user.isGuest ? accountNav.guestPlan : `${planOf(user.plan).name} ${accountNav.planSuffix}`) : "";
 
   const out = async () => {
     setBusy(true);

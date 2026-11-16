@@ -11,7 +11,7 @@ The building blocks:
 - **Campaign**: one product, an optional brand kit, the chosen formats and a number of variations
   (1 to 4). Price it, then run it. Each run makes one **ad** (an "item") per format and variation.
 - **Ad copy**: a headline, a caption and a call to action for every ad, plus scripts for spoken ads.
-  **The copy writer is template-based.** There is no language model in Parallax yet: the wording is
+  **The copy writer is template-based.** There is no language model in Hacksfield yet: the wording is
   filled in from the product and brand fields using fixed templates. It is predictable and on-topic,
   but not creative. Say so in the UI (for example, "Starter copy, edit before posting").
 

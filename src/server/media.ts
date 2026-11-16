@@ -2,6 +2,8 @@ import "server-only";
 
 import { execFile } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import type { MediaType } from "@/registry/types";
 
 /**
@@ -229,6 +231,22 @@ export async function writePoster(video: string, out: string): Promise<boolean> 
   if (!(await hasFfmpeg())) return false;
   const args = ["-y", "-v", "error", "-ss", "0.2", "-i", video, "-frames:v", "1", "-vf", "scale='min(960,iw)':-2", "-q:v", "4", out];
   return (await exec("ffmpeg", args, 30_000)) !== null && fs.existsSync(out);
+}
+
+/** Extracts a generated soundtrack using only local files; ffmpeg never follows URLs. */
+export async function extractSoundtrack(video: Buffer): Promise<Buffer> {
+  if (!(await hasFfmpeg())) throw new Error("Music extraction requires ffmpeg and ffprobe on this Mac.");
+  const directory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "parallax-soundtrack-"));
+  try {
+    const input = path.join(directory, "source.mp4");
+    const output = path.join(directory, "soundtrack.mp3");
+    await fs.promises.writeFile(input, video, { mode: 0o600 });
+    const done = await exec("ffmpeg", ["-nostdin", "-v", "error", "-protocol_whitelist", "file,pipe", "-i", input, "-map", "0:a:0", "-vn", "-t", "16", "-codec:a", "libmp3lame", "-b:a", "192k", output], 60_000);
+    if (done === null || !fs.existsSync(output)) throw new Error("Seedance returned no usable audio soundtrack. The video generation may still be billed by BytePlus.");
+    return await fs.promises.readFile(output);
+  } finally {
+    await fs.promises.rm(directory, { recursive: true, force: true });
+  }
 }
 
 /* ---------------------------------- audio --------------------------------- */

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getModel, quoteJob, resolveValues, type Filled, type ModelDef } from "@/registry";
+import { generationPrice } from "@/config/installation";
 import type { Asset } from "@/server/assets";
 import type { User } from "@/server/auth";
 import { all, get, newId, run, tx } from "@/server/db";
@@ -168,7 +169,7 @@ export function quotePlan(plan: Plan, count = 1) {
   const filled: Filled = Object.fromEntries(Object.entries(plan.composed.inputs).map(([k, v]) => [k, v.length]));
   const values = resolveValues(plan.model, plan.composed.values, filled);
   const q = quoteJob(plan.model, { prompt: plan.composed.prompt, values, filled, count });
-  return { millicredits: q.millicredits, perJob: q.perJob, jobs: q.jobs, values };
+  return { millicredits: q.millicredits, perJob: q.perJob, jobs: q.jobs, values, usd: q.usdPerJob * q.jobs, providerCost: generationPrice(q) };
 }
 
 /**
@@ -186,7 +187,7 @@ export function quoteDraft(q: { mode?: unknown; modelId?: unknown; aspect?: unkn
   if (!Number.isFinite(seconds) || seconds < 1 || seconds > 60) throw badRequest("Duration must be between 1 and 60 seconds.");
   const values = resolveValues(model, baseValues(model, mode, aspect, seconds), {});
   const price = quoteJob(model, { prompt: EMPTY_PROMPT, values, filled: {}, count });
-  return { modelId: model.id, mode, values, price: { total: price.millicredits, perTake: price.perJob, takes: price.jobs } };
+  return { modelId: model.id, mode, values, price: { total: price.millicredits, perTake: price.perJob, takes: price.jobs, providerCost: generationPrice(price) } };
 }
 
 function readCount(v: unknown): number {

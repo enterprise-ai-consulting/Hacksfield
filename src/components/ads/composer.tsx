@@ -3,6 +3,7 @@
 import { ArrowUp, Boxes, Layers, Package, Palette, Plus, Shapes, UserRound, WandSparkles } from "lucide-react";
 import { useState, type ComponentProps, type RefObject } from "react";
 import { formatCredits } from "@/config/economy";
+import { personalInstallation } from "@/config/installation";
 import { ads } from "@/content/ads";
 import { MenuItem, MenuLabel, Popover, PopoverContent, PopoverTrigger, Spinner, cn } from "@/ui";
 import type { AdFormat, ImageRef, Product } from "./data";
@@ -36,7 +37,7 @@ export interface ComposerState {
   variations: number;
   setVariations: (n: number) => void;
   /** Live price in millicredits, or null when nothing is chosen. `approx` when a talking style's price depends on the script. */
-  price: { total: number; approx: boolean } | null;
+  price: { total: number; usd: number; approx: boolean } | null;
   busy: boolean;
   drafting: boolean;
   onGenerate: () => void;
@@ -67,7 +68,7 @@ function StylePicker({ s }: { s: ComposerState }) {
             disabled={!f.available}
             onClick={() => s.toggleFormat(f.id)}
             icon={<Layers className="size-4 text-text-secondary" strokeWidth={1.5} aria-hidden />}
-            hint={f.available ? (f.pricePerAd !== null ? `${formatCredits(f.pricePerAd)} ${ads.pickers.perAd}` : null) : ads.pickers.offline}
+            hint={f.available ? (f.pricePerAd !== null ? personalInstallation ? `${f.metered ? "≤ " : ""}$${(f.providerUsd ?? 0).toFixed(3)} / ad` : `${formatCredits(f.pricePerAd)} ${ads.pickers.perAd}` : null) : ads.pickers.offline}
           >
             {f.name}
           </MenuItem>
@@ -246,7 +247,7 @@ export function AdsComposer({ s, textRef }: { s: ComposerState; textRef: RefObje
           <div className="ml-auto flex items-center gap-1">
             <VariationsPicker s={s} />
             <span className="flex h-6 items-center px-[6px] text-xs leading-4 font-medium text-text-secondary" aria-live="polite" data-testid="ads-price">
-              {s.price ? `${s.price.approx ? "≈" : ""}${formatCredits(s.price.total)} credits` : "—"}
+              {s.price ? personalInstallation ? `${s.price.approx ? "≤ " : ""}$${s.price.usd.toFixed(3)} provider estimate` : `${s.price.approx ? "≈" : ""}${formatCredits(s.price.total)} credits` : "—"}
             </span>
             <button
               type="button"

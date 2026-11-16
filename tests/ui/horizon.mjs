@@ -92,7 +92,7 @@ try {
     }],
     ["a member turns launch news on and off", async () => {
       const email = `horizon-${Date.now()}@example.com`;
-      const r = await b.evaluate(`fetch("/api/auth/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "${email}", password: "horizon-pass-1234", name: "Horizon Tester" }) }).then((r) => r.status)`);
+      const r = await b.evaluate(`fetch("/api/auth/signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "${email}", password: "test-only", name: "Horizon Tester" }) }).then((r) => r.status)`);
       if (r !== 200 && r !== 201) throw new Error(`signup answered ${r}`);
       await b.reload();
       await b.until(`!!document.querySelector('button[data-news]') && !document.querySelector('button[data-news]').disabled`, 10000, "the news button");

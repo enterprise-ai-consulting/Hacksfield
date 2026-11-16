@@ -1,6 +1,8 @@
 import "server-only";
 
 import { formatCredits } from "@/config/economy";
+import { generationPrice, generationProvider } from "@/config/installation";
+import { isPersonalMode } from "@/server/provider-settings";
 import { listAssets, ownedAsset, toAsset } from "@/server/assets";
 import type { User } from "@/server/auth";
 import { ApiError } from "@/server/errors";
@@ -91,7 +93,7 @@ async function waitJobs(ctx: ToolCtx, ids: string[]): Promise<Job[]> {
 const generateMedia: ToolDef = {
   name: "generate_media",
   description:
-    "Generate images, video, speech or music with a model from the registry. Costs credits. Depending on the member's setting this first shows them the model, prompt and price and waits for approval. Use list_models/get_model to pick a model and valid values.",
+    "Generate images, video, speech or music with a model from the registry. Provider usage may cost money. Depending on the member's setting this first shows them the model, prompt and price and waits for approval. Use list_models/get_model to pick a model and valid values.",
   input_schema: {
     type: "object",
     properties: {
@@ -117,8 +119,11 @@ const generateMedia: ToolDef = {
 
     // Price shown on the card. submitJobs prices again and is the one that charges.
     let price: number;
+    let priceLabel: string;
     try {
-      price = quoteJob(model, { prompt, values: resolveValues(model, values, filled), filled, count }).millicredits;
+      const q = quoteJob(model, { prompt, values: resolveValues(model, values, filled), filled, count });
+      price = q.millicredits;
+      priceLabel = isPersonalMode() ? `${generationPrice(q)} provider estimate` : `${formatCredits(price)} credits`;
     } catch {
       return fail("Could not price that request. Check the values with get_model.", "Could not price");
     }
@@ -132,7 +137,7 @@ const generateMedia: ToolDef = {
         prompt,
         count,
         price,
-        priceLabel: `${formatCredits(price)} credits`,
+        priceLabel,
         choices: ["allow", "deny"],
       });
       if (answer.status !== "allowed" && answer.status !== "always") {
@@ -180,11 +185,11 @@ const generateMedia: ToolDef = {
 const registryTools: ToolDef[] = [
   {
     name: "list_models",
-    description: "List the media models Parallax can run, optionally by kind.",
+    description: "List the media models Hacksfield can run, optionally by kind.",
     input_schema: { type: "object", properties: { kind: { type: "string", enum: ["image", "video", "audio", "music"] } } },
     async run(_ctx, input) {
       const kind = typeof input.kind === "string" ? input.kind : null;
-      const list = models.filter((m) => !kind || m.kind === kind).map((m) => ({ id: m.id, name: m.name, kind: m.kind, tagline: m.tagline, status: m.status, surfaces: m.surfaces }));
+      const list = models.filter(m => generationProvider !== "byteplus" || m.id.startsWith("byteplus-") || m.id.startsWith("local-")).filter((m) => !kind || m.kind === kind).map((m) => ({ id: m.id, name: m.name, kind: m.kind, tagline: m.tagline, status: m.status, surfaces: m.surfaces }));
       return ok(json(list), `Listed ${list.length} models`);
     },
   },
@@ -200,7 +205,7 @@ const registryTools: ToolDef[] = [
   },
   {
     name: "quote",
-    description: "Price a generation in credits without starting it.",
+    description: "Price a generation without starting it. A personal installation reports direct provider dollars.",
     input_schema: {
       type: "object",
       properties: { modelId: { type: "string" }, prompt: { type: "string" }, values: { type: "object" }, count: { type: "integer" } },
@@ -210,7 +215,8 @@ const registryTools: ToolDef[] = [
       const m = getModel(S(input.modelId, "modelId", 100));
       if (!m) return fail("Unknown model id.");
       const q = quoteJob(m, { prompt: S(input.prompt, "prompt", 4000, false), values: resolveValues(m, isRecord(input.values) ? input.values : {}, {}), filled: {}, count: N(input.count, "count", 1, 4, 1) });
-      return ok(json({ modelId: m.id, millicredits: q.millicredits, credits: formatCredits(q.millicredits) }), `${formatCredits(q.millicredits)} credits`);
+      const label = isPersonalMode() ? `${generationPrice(q)} provider estimate` : `${formatCredits(q.millicredits)} credits`;
+      return ok(json({ modelId: m.id, providerCost: generationPrice(q), ...(isPersonalMode() ? {} : { millicredits: q.millicredits, credits: formatCredits(q.millicredits) }) }), label);
     },
   },
 ];
@@ -454,6 +460,7 @@ const personalTools: ToolDef[] = [
 
 /** The tools for one model call. Connected apps add their own tools. */
 export async function toolsFor(userId: string): Promise<ToolDef[]> {
+  if (process.env.PARALLAX_ASSISTANT_PROVIDER === "codex-subscription") return engineTools();
   const list = [generateMedia, ...registryTools, ...libraryTools, ...computerTools, ...connectorBase, ...personalTools];
   const apps = activeApps(userId);
   if (apps.length) {

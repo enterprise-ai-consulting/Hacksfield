@@ -96,7 +96,7 @@ function checkModelApp(app: AppDef, model: ModelDef, problems: string[]) {
     for (const extra of variants) {
       const values = resolveValues(model, { ...app.values, ...extra }, filled);
       const q = quoteJob(model, { prompt: prompt || "sample", values, filled, count: 1 });
-      if (!q.exact) say(`no exact price for ${JSON.stringify(extra)} with ${JSON.stringify(filled)}`);
+      if (!q.exact && !(q.request.endpoint.startsWith("byteplus.") && q.metered)) say(`no exact price for ${JSON.stringify(extra)} with ${JSON.stringify(filled)}`);
     }
   }
 }

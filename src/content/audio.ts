@@ -1,4 +1,7 @@
 /** Every word on the Audio page, in one place. */
+import { generationProvider, personalInstallation } from "@/config/installation";
+
+const byteplus = generationProvider === "byteplus";
 
 export type AudioSurface = "speech" | "music";
 
@@ -23,14 +26,14 @@ export const audioCopy = {
   },
   music: {
     scriptLabel: "Describe the track",
-    scriptHint: "Genre, mood, instruments, tempo. Add lyrics in the settings below.",
-    scriptInfo: "Say what it should sound like. Turn Instrumental off to add a voice and words.",
+    scriptHint: byteplus ? "Describe the genre, mood, instruments and tempo for a 4–15 second clip." : "Genre, mood, instruments, tempo. Add lyrics in the settings below.",
+    scriptInfo: byteplus ? "Seedance creates a video with music, then Hacksfield extracts an MP3. Billed at video rates; the price shown reserves your budget. Turn Instrumental off and describe vocals in the prompt if wanted." : "Say what it should sound like. Turn Instrumental off to add a voice and words.",
     hero: {
       title: "Score your next idea",
-      lead: "Describe a sound and get a finished track in under a minute",
+      lead: byteplus ? "Create a short BytePlus soundtrack, ready as a downloadable MP3" : "Describe a sound and get a finished track in under a minute",
       cards: [
         { title: "Describe the sound", body: "Name a genre, a mood and the instruments you hear", art: "audio/music-describe" },
-        { title: "Add words or keep it pure", body: "Write your own lyrics, or leave the track instrumental", art: "audio/music-lyrics" },
+        { title: byteplus ? "Choose 4–15 seconds" : "Add words or keep it pure", body: byteplus ? "Try a short melody, a sting or an instrumental idea. Generation can take several minutes." : "Write your own lyrics, or leave the track instrumental", art: "audio/music-lyrics" },
       ],
     },
   },
@@ -52,7 +55,7 @@ export const audioCopy = {
   listLabel: "Your audio",
   queued: "In line",
   running: "Making it",
-  failedNote: "Your credits are back in your balance.",
+  failedNote: personalInstallation ? "Check the error before trying again. Provider work may still be billable." : "Your credits are back in your balance.",
   failedFallback: "This one did not work.",
   tryAgain: "Try it again",
   useAgain: "Use these settings",
@@ -62,14 +65,14 @@ export const audioCopy = {
   remove: "Remove",
   cancel: "Cancel",
   removeTitle: "Remove this track?",
-  removeBody: "The file is deleted for good and cannot come back. Credits spent on it are not returned.",
+  removeBody: personalInstallation ? "The file is deleted for good and cannot come back. Provider charges are not reversed." : "The file is deleted for good and cannot come back. Credits spent on it are not returned.",
   removeConfirm: "Remove for good",
   keep: "Keep it",
   play: "Play",
   pause: "Pause",
   seek: "Position",
-  noResult: "The model sent nothing back. Your credits for it were returned.",
-  guestNote: "You are trying Parallax as a guest. Create an account to keep what you make.",
+  noResult: personalInstallation ? "The model sent no playable audio. Check provider usage before trying again." : "The model sent nothing back. Your credits for it were returned.",
+  guestNote: personalInstallation ? "Your audio is saved on this Mac in your local session." : "You are trying Hacksfield as a guest. Create an account to keep what you make.",
   visitorNote: "Write a script and press Generate to hear it. Sign in to see your history.",
   createAccount: "Create account",
   signIn: "Sign in",

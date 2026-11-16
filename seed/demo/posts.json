@@ -2,26 +2,26 @@
  "members": [
   {
    "handle": "parallax-studio",
-   "name": "Parallax Studio",
-   "bio": "The house account. Everything here was made with Parallax.",
+   "name": "Hacksfield Studio",
+   "bio": "The house account. Everything here was made with Hacksfield.",
    "avatar": "community-feed-mark.webp"
   },
   {
    "handle": "northlight",
    "name": "Northlight",
-   "bio": "Demo account. Landscapes and weather, made with Parallax.",
+   "bio": "Demo account. Landscapes and weather, made with Hacksfield.",
    "avatar": "community-creators-mark.webp"
   },
   {
    "handle": "paper-kite",
    "name": "Paper Kite",
-   "bio": "Demo account. Paper, clay and small odd things, made with Parallax.",
+   "bio": "Demo account. Paper, clay and small odd things, made with Hacksfield.",
    "avatar": "community-saved-mark.webp"
   },
   {
    "handle": "slow-tide",
    "name": "Slow Tide",
-   "bio": "Demo account. People and quiet moments, made with Parallax.",
+   "bio": "Demo account. People and quiet moments, made with Hacksfield.",
    "avatar": "community-following-mark.webp"
   }
  ],

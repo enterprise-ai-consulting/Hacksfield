@@ -5,14 +5,15 @@ import { all, get, newId, parseJson, run, tx } from "@/server/db";
 import { ApiError, badRequest, notFound } from "@/server/errors";
 import { ANGLES, ASPECTS, FILM_STOCKS, FOCUS, GRADES, LENSES, LENS_FAMILIES, LIGHTING_STYLES, MOODS, MOVEMENTS, SHOT_SIZES } from "./presets";
 import { idList, motionModel, preset, requiredText, stillModel, text } from "./validate";
+import { generationProvider } from "@/config/installation";
 
 /**
  * Projects, scenes, shots and elements (cast, places, props). Every query filters by
  * user_id; a row that belongs to someone else reads as "does not exist".
  */
 
-export const DEFAULT_STILL_MODEL = "nano-banana-2";
-export const DEFAULT_VIDEO_MODEL = "veo-3.1-lite";
+export const DEFAULT_STILL_MODEL = generationProvider === "byteplus" ? "byteplus-seedream-5.5" : "nano-banana-2";
+export const DEFAULT_VIDEO_MODEL = generationProvider === "byteplus" ? "byteplus-seedance-2.5" : "veo-3.1-lite";
 
 const LIMITS = { projects: 200, scenes: 100, shotsPerScene: 100, elements: 100, refs: 8 };
 

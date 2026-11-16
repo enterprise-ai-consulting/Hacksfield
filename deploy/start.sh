@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the built Parallax app in the background, so it survives your terminal closing.
+# Runs the built Hacksfield app in the background, so it survives your terminal closing.
 #
 #   deploy/start.sh         real generations (TREG_TOKEN in .env.local, with its daily budget)
 #   deploy/start.sh mock    free sample files instead of real generations
@@ -13,19 +13,19 @@
 #   origin.txt     optional: the public https address, if the app sits behind a link or proxy
 #   engine/        optional: run Supercomputer on a Hermes agent (see docs/hermes-on-orgo.md)
 #     hermes-api.key   the agent's API key
-#     engine.token     the token the agent uses to call Parallax's tools
+#     engine.token     the token the agent uses to call Hacksfield's tools
 #     name.txt         the name members see (default: Hermes)
 #     url.txt          where the agent's API is (default: this machine's end of tunnel.sh)
 #     off              an empty file with this name turns the engine off
 #
-# PORT (default 3000) and BIND (default 0.0.0.0) can be set when calling the script.
+# PORT (default 3000) and BIND (default 127.0.0.1) can be set when calling the script.
 set -euo pipefail
 
 DEPLOY_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(cd "$DEPLOY_DIR/.." && pwd)"
 RUN_DIR="$DEPLOY_DIR/run"
 PORT="${PORT:-3000}"
-BIND="${BIND:-0.0.0.0}"
+BIND="${BIND:-127.0.0.1}"
 
 if [ ! -d "$APP_DIR/.next" ]; then echo "not built yet: run npm ci && npm run build"; exit 1; fi
 mkdir -p "$RUN_DIR"

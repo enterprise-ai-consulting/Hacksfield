@@ -1,6 +1,7 @@
 import "server-only";
 
 import { MAX_BATCH, formatCredits } from "@/config/economy";
+import { generationPrice } from "@/config/installation";
 import { getModel, quoteJob, resolveValues, type Control, type Filled, type ModelDef, type Values } from "@/registry";
 import type { User } from "../auth";
 import { all, get, newId, parseJson, run, tx } from "../db";
@@ -52,6 +53,7 @@ function runnableApp(id: string): { app: AppDef; model: ModelDef } {
 /* -------------------------------- pricing -------------------------------- */
 
 export interface Price {
+  providerCost: string;
   /** Total for this run, in millicredits. */
   millicredits: number;
   /** The same, formatted for display: "5.4". */
@@ -89,7 +91,7 @@ function countOf(app: AppDef, model: ModelDef, raw: unknown): number {
 function quote(app: AppDef, model: ModelDef, prompt: string, member: Values, filled: Filled, count: number) {
   const values = resolveValues(model, { ...app.values, ...member }, filled);
   const q = quoteJob(model, { prompt, values, filled, count });
-  const price: Price = { millicredits: q.millicredits, credits: formatCredits(q.millicredits), perResult: Math.round(q.perJob / q.perJobCount), count: q.jobs * q.perJobCount };
+  const price: Price = { providerCost: generationPrice(q), millicredits: q.millicredits, credits: formatCredits(q.millicredits), perResult: Math.round(q.perJob / q.perJobCount), count: q.jobs * q.perJobCount };
   return { values, price };
 }
 

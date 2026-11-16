@@ -1,11 +1,11 @@
 /**
  * The Canvas pages' own words. Layout and style come from the design; every line here is
- * Parallax's. Keep each line about as long as the one it replaces so the layout holds.
+ * Hacksfield's. Keep each line about as long as the one it replaces so the layout holds.
  */
 export const canvasCopy = {
   meta: { landing: "Canvas", board: "Canvas board" },
   hero: {
-    eyebrow: "Parallax Canvas",
+    eyebrow: "Hacksfield Canvas",
     line1: "Lay out ideas",
     line2: "on an open canvas",
     note: "A quiet harbour at first light, two rowing boats tied to the pier, gulls over calm water and soft fog rolling in.",

@@ -3,6 +3,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { serviceMode } from "./config";
 import { clip, sleep } from "./util";
+import { CodexSubscriptionLlm } from "./codex-subscription";
 
 /**
  * The language model behind the assistant. Live: the Messages API through the official
@@ -186,6 +187,6 @@ const holder = globalThis as unknown as { __superLlm?: LlmClient };
 
 export function llm(): LlmClient {
   const live = serviceMode("llm") === "live";
-  if (!holder.__superLlm || holder.__superLlm.live !== live) holder.__superLlm = live ? new AnthropicLlm() : new MockLlm();
+  if (!holder.__superLlm || holder.__superLlm.live !== live) holder.__superLlm = process.env.PARALLAX_ASSISTANT_PROVIDER === "codex-subscription" ? new CodexSubscriptionLlm() : live ? new AnthropicLlm() : new MockLlm();
   return holder.__superLlm;
 }

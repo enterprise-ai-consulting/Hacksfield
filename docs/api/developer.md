@@ -1,12 +1,12 @@
 # Developer API, webhooks and MCP
 
-Developers and AI agents can use Parallax without the website. There are three parts:
+Developers and AI agents can use Hacksfield without the website. There are three parts:
 
 - **Account routes** under `/api/developer/*`. These use the normal cookie session, and the developer screens call them. They manage API keys, the usage log and webhook endpoints.
 - **The public REST API** under `/api/v1/*`. It authenticates with `Authorization: Bearer <key>`. The OpenAPI document is at `/api/v1/openapi.json`.
 - **The MCP server** at `/api/mcp`, for AI agents. It uses the same bearer keys.
 
-Conventions are the same as the rest of Parallax:
+Conventions are the same as the rest of Hacksfield:
 
 - Times are Unix milliseconds.
 - Credit amounts are **millicredits** (1000 = 1 credit).
@@ -76,7 +76,7 @@ Request:
 **201**
 
 ```json
-{ "key": ApiKey, "secret": "pxk_PmX-UNALq9...43 more characters" }
+{ "key": ApiKey, "secret": "<one-time API key>" }
 ```
 
 Errors:
@@ -255,10 +255,10 @@ Puts a `delivered` or `failed` delivery back in the queue, with a fresh set of a
 ### How deliveries work (for the docs screen)
 
 - Each delivery is a `POST` of JSON (the `payload` above) with these headers:
-  - `Parallax-Webhook-Id`: the delivery id. It is the same on every retry, so receivers can drop repeats.
-  - `Parallax-Webhook-Event`: the event name.
-  - `Parallax-Webhook-Timestamp`: Unix **seconds**.
-  - `Parallax-Webhook-Signature`: `v1=` followed by the hex HMAC-SHA256 of `"<timestamp>.<raw body>"`, keyed with the endpoint's secret.
+  - `Hacksfield-Webhook-Id`: the delivery id. It is the same on every retry, so receivers can drop repeats.
+  - `Hacksfield-Webhook-Event`: the event name.
+  - `Hacksfield-Webhook-Timestamp`: Unix **seconds**.
+  - `Hacksfield-Webhook-Signature`: `v1=` followed by the hex HMAC-SHA256 of `"<timestamp>.<raw body>"`, keyed with the endpoint's secret.
 - To verify a delivery, compute the same HMAC, compare it in constant time, and reject timestamps older than 5 minutes.
 - Any 2xx answer counts as delivered. Anything else, a timeout (10 s) or a connection error is retried after 30 s, 2 min, 10 min, 1 h and 6 h. After 6 attempts the delivery is `failed`.
 - Redirects are not followed.
@@ -268,7 +268,7 @@ Example receiver check (Python):
 
 ```python
 expected = "v1=" + hmac.new(secret.encode(), f"{ts}.".encode() + raw_body, hashlib.sha256).hexdigest()
-ok = hmac.compare_digest(expected, request.headers["Parallax-Webhook-Signature"])
+ok = hmac.compare_digest(expected, request.headers["Hacksfield-Webhook-Signature"])
 ```
 
 ---
@@ -536,7 +536,7 @@ On every revision:
 - Notifications get `202` with an empty body.
 - `GET` and `DELETE` get `405`.
 - A request with an `Origin` header from another site gets `403`.
-- A missing or bad key gets `401` (Parallax error shape, with `WWW-Authenticate: Bearer`).
+- A missing or bad key gets `401` (Hacksfield error shape, with `WWW-Authenticate: Bearer`).
 - Rate limit headers and the request log work as for REST.
 
 Tools (`tools/list`):
@@ -550,9 +550,19 @@ Tools (`tools/list`):
 | `get_generation` | read | `id` | `{ generation }` |
 | `list_generations` | read | `status?, kind?, limit? (≤50), before?` | `{ generations }` |
 | `list_files` | read | `kind?, source?, limit? (≤50), before?` | `{ files }` |
+| `get_download` | generate | `id` (owned file id) | `{ file: { id, kind, mime, bytes, name, url, expiresAt } }` |
 | `get_balance` | read | none | `{ balance, credits, plan }` |
 
 A tool result has `content: [{ type: "text", text: <JSON> }]`, `structuredContent` and `isError`. When a tool fails (missing scope, not found, no credits and so on), the result has `isError: true` and the member-facing message as its text, so the agent can read it. An unknown tool name is a JSON-RPC error, `-32602`.
+
+`get_download` is an explicit export: it copies only the selected owned asset to
+private BytePlus TOS storage and returns a signed HTTPS link valid for one hour.
+It requires configured TOS credentials and uses the `parallax/downloads/` prefix,
+so the installation's one-day cleanup rule applies. The bucket is never made
+public. Repeated/concurrent requests reuse a temporary copy. Storage and transfer
+charges are separate from media generation budgets. In personal mode, MCP
+instructions and `get_balance` clarify that legacy credits do not impose a
+Hacksfield membership charge.
 
 Client setup to show on the connect screen:
 

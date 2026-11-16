@@ -1,6 +1,6 @@
 /**
  * The Library's words and lists. Layout and style come from the design; every word here
- * is Parallax's own.
+ * is Hacksfield's own.
  */
 
 export type SectionId = "all" | "folders" | "favourites" | "elements" | "trash" | "image" | "video" | "audio" | "uploads";

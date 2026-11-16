@@ -10,7 +10,12 @@ export const REMIX_SURFACE = "remix";
  * The Mode row. Each mode is one real model from the video registry that starts from a
  * picture (it has a `start` slot). Standard is the cheaper one, Pro the higher-fidelity one.
  */
-export const remixModes = [
+import { generationProvider } from "@/config/installation";
+
+export const remixModes = generationProvider === "byteplus" ? [
+  { id: "standard", label: "Seedance 2.0", modelId: "byteplus-seedance-2.0", hint: "Direct BytePlus, with sound" },
+  { id: "pro", label: "Seedance 2.5", modelId: "byteplus-seedance-2.5", hint: "Current model, higher provider cost" },
+] as const : [
   { id: "standard", label: "Standard", modelId: "wan-3", hint: "Quick and cheaper" },
   { id: "pro", label: "Pro", modelId: "wan-3-prime", hint: "Finer detail" },
 ] as const;

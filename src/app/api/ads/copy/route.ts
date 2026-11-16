@@ -1,10 +1,11 @@
 import { badRequest, readJson, route } from "@/server/http";
 import { copyWriter } from "@/server/ads/copy";
 import { kitData, ownedKit, ownedProduct, productData } from "@/server/ads/library";
+import { subscriptionCopy } from "@/server/ads/subscription-copy";
 
 /**
  * POST /api/ads/copy  { productId, brandKitId?, count?, seconds? }
- * Headlines, captions and calls to action, plus a spoken script. Template-based for now.
+ * Headlines, captions and calls to action, plus a spoken script. Uses Codex when configured.
  */
 export const POST = route(async ({ req, user }) => {
   const body = await readJson(req);
@@ -18,6 +19,7 @@ export const POST = route(async ({ req, user }) => {
   if (!Number.isFinite(seconds) || seconds < 5 || seconds > 60) throw badRequest("Pick a script length between 5 and 60 seconds.");
   const writer = copyWriter();
   const data = productData(product);
+  if (process.env.PARALLAX_ASSISTANT_PROVIDER === "codex-subscription") return subscriptionCopy(data, brand, count, seconds, req.signal);
   const options = Array.from({ length: count }, (_, i) => writer.write({ product: data, brand, seed: i + 1 }));
   return { writer: writer.kind, copy: options, script: writer.script({ product: data, brand, seed: 1 }, seconds) };
 });

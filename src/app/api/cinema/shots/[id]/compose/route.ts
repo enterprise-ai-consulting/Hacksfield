@@ -8,5 +8,5 @@ export const GET = route<{ id: string }>(({ req, user, params }) => {
   const plan = planTake(user.id, params.id, body);
   const count = Math.min(4, Math.max(1, Math.floor(Number(q.get("count") ?? 1)) || 1));
   const price = quotePlan(plan, count);
-  return { ...plan.composed, values: price.values, sourceTakeId: plan.sourceTakeId, price: { total: price.millicredits, perTake: price.perJob, takes: price.jobs } };
+  return { ...plan.composed, values: price.values, sourceTakeId: plan.sourceTakeId, price: { total: price.millicredits, perTake: price.perJob, takes: price.jobs, providerCost: price.providerCost } };
 });

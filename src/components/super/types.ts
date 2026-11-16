@@ -44,6 +44,7 @@ export interface Row {
 }
 
 export interface SuperConfig {
+  billing?: "subscription" | "api" | "demo";
   modes: { id: string; name: string; description?: string }[];
   defaultMode: string;
   models: { id: string; name: string; description?: string; tier: string }[];

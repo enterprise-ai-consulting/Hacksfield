@@ -1,6 +1,6 @@
 /**
  * The Image studio's own words. Layout and style come from the design; every line here
- * is Parallax's. Keep each line about as long as the one it replaces so the layout holds.
+ * is Hacksfield's. Keep each line about as long as the one it replaces so the layout holds.
  */
 export const imageCopy = {
   toolbar: {

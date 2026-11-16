@@ -8,6 +8,7 @@ import { LoginDialog } from "@/components/entry/login-dialog";
 import { appCopy, appsCopy } from "@/content/apps";
 import { routes } from "@/content/site";
 import { formatCredits } from "@/config/economy";
+import { personalInstallation } from "@/config/installation";
 import { api, ApiError, errorMessage, fetcher, type Asset, type Job } from "@/lib/api";
 import { useNow } from "@/lib/browser";
 import { refreshSession, setBalance, useSession } from "@/lib/session";
@@ -381,7 +382,7 @@ export function AppRunner({ id }: { id: string }) {
             >
               {busy ? <Spinner label={appCopy.running} /> : <Play className="size-3 fill-current" strokeWidth={1.5} aria-hidden />}
               {runLabel}
-              {available && price ? <span className="font-mono text-xs leading-4 text-[#131517B3]">· {formatCredits(price.millicredits)} {appCopy.credits}</span> : null}
+              {available && price ? <span className="font-mono text-xs leading-4 text-[#131517B3]">· {personalInstallation ? `${price.providerCost} provider estimate` : `${formatCredits(price.millicredits)} ${appCopy.credits}`}</span> : null}
             </button>
             {signedOut && available ? <p className="text-xs leading-4 text-text-secondary">{appCopy.signInBody}</p> : null}
             {!signedOut && missingInputs.length > 0 && available ? (

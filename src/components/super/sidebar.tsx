@@ -1,4 +1,5 @@
 "use client";
+import { personalInstallation } from "@/config/installation";
 
 import {
   Brain,
@@ -449,14 +450,14 @@ export function Sidebar({
       {/* Pricing and the account. */}
       <div className="flex shrink-0 flex-col items-center gap-2 pt-2 pb-3">
         <Link
-          href={routes.pricing}
+          href={personalInstallation ? "/settings/provider" : routes.pricing}
           className="flex h-8 w-[206px] items-center justify-between rounded-full bg-[#FF005B1A] pr-[7px] pl-3 transition-colors duration-150 hover:bg-[#FF005B33]"
         >
           <span className="flex items-center gap-2 text-sm leading-5 font-medium text-promo">
             <TagIcon className="size-4" strokeWidth={1.5} aria-hidden />
-            {copy.nav.pricing}
+            {personalInstallation ? "Generation settings" : copy.nav.pricing}
           </span>
-          {pricingBadge ? (
+          {!personalInstallation && pricingBadge ? (
             <span className="flex h-[18px] items-center rounded-full bg-promo px-[6px] text-2xs leading-[14px] font-medium text-text-primary">{pricingBadge}</span>
           ) : null}
         </Link>

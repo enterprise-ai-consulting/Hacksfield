@@ -1,6 +1,6 @@
 import "server-only";
 
-import { MAX_BATCH, formatCredits, planOf } from "@/config/economy";
+import { MAX_BATCH, formatCredits } from "@/config/economy";
 import { assetRef, catalogEndpoint, getModel, quoteJob, resolveValues, visibleSlots, type Filled, type Kind, type MediaRef, type MediaType, type ModelDef, type Values } from "@/registry";
 import { assetsOfJobs, ownedAsset, removeAsset, toAsset, type Asset, type AssetRow } from "./assets";
 import type { User } from "./auth";
@@ -8,7 +8,11 @@ import { balance, hold, release } from "./credits";
 import { all, get, newId, parseJson, run, tx, type Param } from "./db";
 import { ApiError, badRequest, notFound } from "./errors";
 import { tregMode } from "./treg";
+import { isPersonalMode, providerSettings, requireBytePlusCredentials, requireDecartKey, requireStorage } from "./provider-settings";
+import { validateDecartImage, validateDecartSource } from "./decart";
+import { validateVideoReference, validateSeedanceAudio } from "./byteplus-storage";
 import { kick, outputOf } from "./worker";
+import { generationPlan } from "./generation-limits";
 
 /**
  * Jobs: one row per provider call. Every studio and tool submits through `submitJobs`,
@@ -142,10 +146,11 @@ function activeCount(userId: string): number {
 }
 
 /** Provider spend we have committed to in the last 24 hours, in dollars. Mock jobs cost nothing. */
-function spentToday(): number {
+export function spentToday(): number {
   return get<{ usd: number }>(
     // A job that failed after the provider ran still cost what the provider charged.
     `SELECT COALESCE(SUM(CASE WHEN status IN ('failed', 'canceled') THEN COALESCE(provider_cost_micro, 0) / 1e6
+                              WHEN status = 'succeeded' AND provider_cost_micro IS NOT NULL THEN provider_cost_micro / 1e6
                               ELSE MAX(est_usd, COALESCE(provider_cost_micro, 0) / 1e6) END), 0) AS usd
        FROM jobs
       WHERE created_at > ? AND (treg_call_id IS NULL OR treg_call_id != 'mock')`,
@@ -203,26 +208,44 @@ export function submitJobs(user: User, input: SubmitInput): Job[] {
   }
 
   const media: Record<string, MediaRef[]> = {};
-  for (const [slot, list] of Object.entries(files)) media[slot] = list.map((a) => assetRef(a.id, a.mime));
+  for (const [slot, list] of Object.entries(files)) media[slot] = list.map((a) => ({ ...assetRef(a.id, a.mime), duration: a.duration }));
 
   const asked = Math.floor(Number(input.count)) || 1;
   const quote = quoteJob(model, { prompt, values, media, filled, count: model.batch.native ? asked : Math.min(asked, MAX_BATCH) });
   if (!catalogEndpoint(quote.request.endpoint)) throw new ApiError(409, "model_unavailable", `${model.name} is not available right now.`);
 
   const have = balance(user.id);
-  if (have < quote.millicredits) {
+  if (!isPersonalMode() && have < quote.millicredits) {
     throw new ApiError(402, "insufficient_credits", `This needs ${formatCredits(quote.millicredits)} credits and you have ${formatCredits(Math.max(0, have))}.`);
   }
 
-  const plan = planOf(user.plan);
+  const plan = generationPlan(user.plan);
   if (activeCount(user.id) + quote.jobs > plan.concurrency) {
-    throw new ApiError(429, "too_many_jobs", `You can run ${plan.concurrency} at once on the ${plan.name} plan. Wait for one to finish.`);
+    throw new ApiError(429, "too_many_jobs", isPersonalMode() ? `Wait for one of the ${plan.concurrency} active generations to finish.` : `You can run ${plan.concurrency} at once on the ${plan.name} plan. Wait for one to finish.`);
   }
 
-  if (tregMode() === "live") {
-    const cap = Number(process.env.TREG_DAILY_BUDGET_USD ?? 10);
-    if (Number.isFinite(cap) && spentToday() + quote.usdPerJob * quote.jobs > cap) {
-      throw new ApiError(503, "model_unavailable", "Generation is paused for today. Try again tomorrow.");
+  if (tregMode(quote.request.endpoint) === "live") {
+    const direct = quote.request.endpoint.startsWith("byteplus.");
+    const decart = quote.request.endpoint.startsWith("decart.");
+    const local = quote.request.endpoint.startsWith("local.");
+    if (direct) requireBytePlusCredentials(quote.request.endpoint);
+    else if (decart) {
+      requireDecartKey();
+      (files.source ?? []).forEach(source => validateDecartSource(source, quote.request.endpoint));
+      Object.values(files).flat().filter(file => file.kind === "image").forEach(validateDecartImage);
+    }
+    else if (!local && !(process.env.TREG_TOKEN ?? "").trim()) throw new ApiError(503, "provider_configuration", "This model needs a Treg provider key. Use Seedream or Seedance for your direct BytePlus connection.");
+    if (quote.request.endpoint === "byteplus.video.seedance-2-5") (files.audio ?? []).forEach(validateSeedanceAudio);
+    if (local && files.source?.some(a => a.duration == null || a.duration > 30 || (a.width ?? 0) > 3840 || (a.height ?? 0) > 3840)) throw badRequest("Use a local video source up to 30 seconds and 3840 pixels per side.");
+    const cap = direct || decart ? providerSettings().dailyBudgetUsd : Number(process.env.TREG_DAILY_BUDGET_USD ?? 10);
+    if (direct && files.source?.some(a => a.kind === "video")) {
+      requireStorage();
+      files.source.forEach(validateVideoReference);
+    }
+    if (!Number.isFinite(cap) || cap < 0) throw new ApiError(503, "provider_configuration", "Set a valid daily provider budget before generating.");
+    if (!local && Number.isFinite(cap) && spentToday() + quote.usdPerJob * quote.jobs > cap) {
+      const needed = quote.usdPerJob * quote.jobs;
+      throw new ApiError(503, "model_unavailable", `This request reserves $${needed.toFixed(2)}; $${Math.max(0, cap - spentToday()).toFixed(2)} remains in the rolling daily budget. Try fewer results, a shorter clip or lower resolution, or adjust Generation settings.`);
     }
   }
 
@@ -253,13 +276,13 @@ export function submitJobs(user: User, input: SubmitInput): Job[] {
         quote.request.endpoint,
         request,
         quote.perJobCount,
-        quote.perJob,
+        isPersonalMode() ? 0 : quote.perJob,
         quote.usdPerJob,
         batchId,
         metaText.length <= 4000 ? metaText : "{}",
         now + i, // keeps a batch in a stable order
       );
-      hold(user.id, id, quote.perJob, model.name);
+      if (!isPersonalMode()) hold(user.id, id, quote.perJob, model.name);
     }
   });
 

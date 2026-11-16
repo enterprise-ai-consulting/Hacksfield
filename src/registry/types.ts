@@ -91,6 +91,7 @@ export interface MediaRef {
   url: string;
   data: string;
   mime: string;
+  duration?: number | null;
 }
 
 export interface BuildContext {

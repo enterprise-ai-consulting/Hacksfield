@@ -46,7 +46,7 @@ try {
     }],
     ["no sideways scroll", noSideways],
     ["the logo goes home", async () => {
-      const href = await b.evaluate(`[...document.querySelectorAll('a[aria-label="Back to the Parallax home page"]')].filter((a) => a.getClientRects().length).map((a) => a.getAttribute("href"))[0]`);
+      const href = await b.evaluate(`[...document.querySelectorAll('a[aria-label="Back to the Hacksfield home page"]')].filter((a) => a.getClientRects().length).map((a) => a.getAttribute("href"))[0]`);
       if (href !== "/") throw new Error(`logo links to ${href}`);
     }],
     ["signed out: the sidebar invites a log in", async () => {

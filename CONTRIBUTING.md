@@ -1,6 +1,6 @@
-# Contributing to Parallax
+# Contributing to Hacksfield
 
-Parallax is an open-source AI image, video and audio studio. This page is for people and
+Hacksfield is an open-source AI image, video and audio studio. This page is for people and
 agents changing it. Read it before you write code. Also read `AGENTS.md`: this is
 Next.js 16, and it differs from older versions.
 
@@ -97,7 +97,7 @@ only ever get `/api/assets/<id>/file` links.
 **Secrets and privacy.** No secrets in code, logs, error messages or test output. A member
 must never be able to read, change or use another member's private data. Test that.
 
-**Clean room.** Parallax is its own product. Do not copy another product's text, names,
+**Clean room.** Hacksfield is its own product. Do not copy another product's text, names,
 images or brand. Write your own wording.
 
 **Style.** TypeScript, strict. Small files, plain names, comments that say why. Match the

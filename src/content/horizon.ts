@@ -1,6 +1,6 @@
 /**
  * Horizon (the long-form video studio that is not open yet) and the Guide: every word and list
- * on those two pages. Layout and style come from the design; the words are Parallax's.
+ * on those two pages. Layout and style come from the design; the words are Hacksfield's.
  * Keep each line about as long as the one it replaces so the layout holds.
  */
 import { brand } from "@/config/brand";

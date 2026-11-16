@@ -91,6 +91,7 @@ export function SuperComposer({
   const modelId = (model && (!config || config.models.some((m) => m.id === model)) ? model : null) ?? config?.defaultModel ?? "auto";
   const modeDef = config?.modes.find((m) => m.id === modeId) ?? (modeId === DEFAULT_MODE.id ? DEFAULT_MODE : { id: modeId, name: modeId });
   const modelDef = config?.models.find((m) => m.id === modelId);
+  const tierHint = config?.billing === "subscription" ? "Relative plan usage per reply" : copy.tierHint;
   const maxFiles = config?.limits.maxFilesPerMessage ?? 10;
   const maxLen = config?.limits.messageMaxLength ?? 20000;
 
@@ -221,7 +222,7 @@ export function SuperComposer({
                       <Cpu className="size-4 shrink-0 text-text-secondary" strokeWidth={1.5} aria-hidden />
                       <span className="truncate text-xs leading-4 font-medium text-text-primary">{modelDef?.name ?? "Auto"}</span>
                       {modelDef ? (
-                        <span className="flex h-5 shrink-0 items-center rounded-full bg-[#D1FE170D] px-[6px] text-xs leading-4 font-medium text-brand" title={copy.tierHint}>
+                        <span className="flex h-5 shrink-0 items-center rounded-full bg-[#D1FE170D] px-[6px] text-xs leading-4 font-medium text-brand" title={tierHint}>
                           {copy.tiers[modelDef.tier] ?? modelDef.tier}
                         </span>
                       ) : null}
@@ -234,7 +235,7 @@ export function SuperComposer({
                 <PopoverContent className="w-[280px]">
                   <div className="flex h-8 items-center justify-between px-2 text-xs leading-4 font-medium text-text-tab">
                     {copy.composer.model}
-                    <span className="font-normal text-text-tertiary">{copy.tierHint}</span>
+                    <span className="font-normal text-text-tertiary">{tierHint}</span>
                   </div>
                   {!config ? (
                     <div className="flex h-9 items-center px-2" aria-hidden>

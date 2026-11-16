@@ -145,7 +145,7 @@ export interface Composed {
   inputs: Record<string, unknown>;
   notes: string[];
   sourceTakeId: string | null;
-  price: { total: number; perTake: number; takes: number };
+  price: { total: number; perTake: number; takes: number; providerCost: string };
 }
 
 export interface Batch {
@@ -160,7 +160,7 @@ export interface Batch {
 }
 
 export interface BatchQuote {
-  quote: { modelId: string; count: number; total: number; balance: number; affordable: boolean; concurrency: number };
+  quote: { modelId: string; count: number; total: number; providerCost: string; balance: number; affordable: boolean; concurrency: number };
   batch: Batch | null;
 }
 

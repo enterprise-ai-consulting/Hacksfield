@@ -166,7 +166,7 @@ export function publish(user: User, input: PublishInput): Post {
   const tags = cleanTags(input.tags) ?? [];
   if (input.allowRecreate !== undefined && typeof input.allowRecreate !== "boolean") throw badRequest("Allow recreate must be true or false.");
   const asset = ownedAsset(user.id, input.assetId);
-  if (asset.source !== "generated") throw badRequest("Only files you generated on Parallax can be published.");
+  if (asset.source !== "generated") throw badRequest("Only files you generated on Hacksfield can be published.");
 
   const id = newId("pst");
   tx(() => {

@@ -2,8 +2,7 @@ import { brand } from "@/config/brand";
 import { cn } from "@/ui";
 
 /**
- * The Parallax mark: two slanted bars, the near one solid and the far one faint, on a white
- * tile. It is our own drawing. `size` is the tile's side in pixels (20 in the nav, 18 inline).
+ * An H on a lime tile distinguishes this fork from Parallax. `size` is the tile's side.
  */
 export function LogoMark({ size = 20, className, title }: { size?: number; className?: string; title?: string }) {
   return (
@@ -16,9 +15,8 @@ export function LogoMark({ size = 20, className, title }: { size?: number; class
       aria-hidden={title ? undefined : true}
       className={cn("shrink-0", className)}
     >
-      <rect width="20" height="20" rx="6" fill="#FFFFFF" />
-      <path d="M4.5 14.5 8.4 5.5h3.1l-3.9 9z" fill="#131517" />
-      <path d="M10.4 14.5l3.9-9h1.9l-3.9 9z" fill="#131517" fillOpacity="0.45" />
+      <rect width="20" height="20" rx="6" fill="#C5F74F" />
+      <path d="M5.5 5h3v3.5h3V5h3v10h-3v-3.5h-3V15h-3z" fill="#131517" />
     </svg>
   );
 }

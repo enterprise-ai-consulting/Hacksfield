@@ -5,6 +5,7 @@ import { Popover as P } from "radix-ui";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { PLANS, SIGNUP_CREDITS, formatCredits, planOf } from "@/config/economy";
+import { personalInstallation } from "@/config/installation";
 import { accountWords, navWords } from "@/content/shell";
 import { routes } from "@/content/site";
 import { errorMessage } from "@/lib/api";
@@ -86,12 +87,12 @@ export function AccountPanel({ onDone }: { onDone?: () => void }) {
         <Avatar name={name} url={member.avatarUrl} size={40} />
         <span className="flex min-w-0 grow flex-col">
           <span className="truncate text-sm leading-5 font-medium text-text-primary">{name}</span>
-          <span className="truncate text-sm leading-5 text-text-secondary">{accountWords.plan(plan.name)}</span>
+          <span className="truncate text-sm leading-5 text-text-secondary">{personalInstallation ? "Personal installation" : accountWords.plan(plan.name)}</span>
         </span>
         <ChevronRight className="size-4 shrink-0 text-text-secondary" strokeWidth={1.5} aria-hidden />
       </Link>
 
-      <section aria-label={accountWords.creditsHeading} className="flex flex-col rounded-2xl bg-border-subtle px-3 pt-3 pb-1">
+      {!personalInstallation ? <section aria-label={accountWords.creditsHeading} className="flex flex-col rounded-2xl bg-border-subtle px-3 pt-3 pb-1">
         <Link href={routes.wallet} onClick={onDone} className="flex h-5 shrink-0 items-center gap-[6px] rounded-sm">
           <span className="text-sm leading-5 font-medium text-text-primary">{accountWords.creditsHeading}</span>
           <span title={accountWords.creditsHint} className="flex text-text-secondary">
@@ -121,7 +122,7 @@ export function AccountPanel({ onDone }: { onDone?: () => void }) {
           label={plan.id === TOP_PLAN.id ? accountWords.changePlan : accountWords.upgrade}
           onDone={onDone}
         />
-      </section>
+      </section> : <Row href="/settings/provider" icon={<Settings className="size-4" strokeWidth={1.5} aria-hidden />} onDone={onDone}>Generation settings</Row>}
 
       <nav aria-label={navWords.account} className="flex flex-col pt-[2px]">
         {member.handle ? (

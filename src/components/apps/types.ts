@@ -3,6 +3,7 @@ import type { Job } from "@/lib/api";
 import type { Control } from "@/registry";
 
 export interface Price {
+  providerCost: string;
   millicredits: number;
   credits: string;
   perResult: number;

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { models, type ModelDef } from "@/registry";
+import { modelsFor, type ModelDef } from "@/registry";
 import { CATALOG } from "./presets";
 import { DEFAULT_STILL_MODEL, DEFAULT_VIDEO_MODEL } from "./store";
 import { canAnimate, canTextToVideo, isStillModel } from "./validate";
@@ -24,8 +24,8 @@ export function catalog() {
   return {
     presets: CATALOG,
     models: {
-      still: models.filter(isStillModel).map(brief),
-      video: models.filter((m) => canAnimate(m) || canTextToVideo(m)).map(brief),
+      still: modelsFor("image").filter(isStillModel).map(brief),
+      video: modelsFor("video").filter((m) => canAnimate(m) || canTextToVideo(m)).map(brief),
     },
     defaults: { stillModelId: DEFAULT_STILL_MODEL, videoModelId: DEFAULT_VIDEO_MODEL, aspect: "16:9", shotDuration: 5 },
   };

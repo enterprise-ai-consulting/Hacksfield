@@ -11,7 +11,7 @@ import { imageSize, sniff } from "./media";
  * so the community feed and the home page are not empty the first time the app is opened.
  *
  * It runs only when PARALLAX_DEMO_SEED=1, and only once per data directory. Every picture in
- * `seed/demo/` was generated with Parallax itself, and each post carries the prompt and the
+ * `seed/demo/` was generated with Hacksfield itself, and each post carries the prompt and the
  * model that made it, so Recreate works on all of them. The accounts have no email and no
  * password, so nobody can sign in as them. The likes and follows between them are real rows.
  */

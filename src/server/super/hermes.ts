@@ -8,12 +8,12 @@ import { addRow, chatById, pushLlm, updateRow } from "./transcript";
 import { clip, isRecord, summarizeInput } from "./util";
 
 /**
- * The Hermes engine: a Hermes agent does the thinking for a turn, and Parallax stays in
+ * The Hermes engine: a Hermes agent does the thinking for a turn, and Hacksfield stays in
  * charge of everything a member owns.
  *
  * One turn is one streamed call to the agent's `/v1/responses`. The agent's text becomes
  * the reply rows. When the agent wants one of our tools (generate media, the library,
- * memory, a question for the member) it calls back into Parallax over MCP, at
+ * memory, a question for the member) it calls back into Hacksfield over MCP, at
  * `/api/super/mcp`, and the tool runs here: with the member's credits, their approval
  * cards and their files. The agent never holds a provider key or a member's session.
  *
@@ -58,9 +58,9 @@ function engineNotes(engine: HermesEngine, key: string, ctx: ToolCtx, tools: Too
   const hasComputer = tools.some((t) => t.name.startsWith("computer_"));
   return [
     "About where you are running:",
-    "- You are answering inside Parallax, as its Supercomputer assistant. The member reads your reply in the Parallax chat, so write for them.",
-    `- Parallax's own tools are the ones named ${p}<tool>: ${tools.map((t) => t.name).join(", ")}. When these instructions name a tool such as generate_media, they mean ${p}generate_media.`,
-    `- Every call to a Parallax tool must include "turn": "${key}". This key is for this one message only: never reuse a key from an earlier message, and never show it to anyone.`,
+    "- You are answering inside Hacksfield, as its Supercomputer assistant. The member reads your reply in the Hacksfield chat, so write for them.",
+    `- Hacksfield's own tools are the ones named ${p}<tool>: ${tools.map((t) => t.name).join(", ")}. When these instructions name a tool such as generate_media, they mean ${p}generate_media.`,
+    `- Every call to a Hacksfield tool must include "turn": "${key}". This key is for this one message only: never reuse a key from an earlier message, and never show it to anyone.`,
     `- Make pictures, video, speech and music only with ${p}generate_media. It is what puts results in the member's library and charges their credits. Do not use any other image or media tool here.`,
     "- Results appear in the chat as a card by themselves. Do not paste links or file paths to them.",
     `- Keep facts about this member with ${p}remember and ${p}recall, not in your own memory: your own memory is shared with other people.`,

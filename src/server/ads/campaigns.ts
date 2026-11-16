@@ -1,6 +1,8 @@
 import "server-only";
+import { isPersonalMode } from "../provider-settings";
 
-import { formatCredits, planOf } from "@/config/economy";
+import { formatCredits } from "@/config/economy";
+import { generationPlan } from "../generation-limits";
 import { getModel, quoteJob, resolveValues, type Filled } from "@/registry";
 import { assetsOfJobs } from "@/server/assets";
 import { userById, type User } from "@/server/auth";
@@ -256,7 +258,7 @@ function quoteView(userId: string, p: Plan) {
     perFormat.set(it.format.id, e);
   }
   const have = balance(userId);
-  return { total: p.total, ads: p.items.length, formats: [...perFormat.values()], balance: have, enough: have >= p.total };
+  return { total: p.total, ads: p.items.length, formats: [...perFormat.values()], balance: have, enough: isPersonalMode() || have >= p.total };
 }
 
 /** Price of running the whole campaign (or, with `formatId`, of re-running that one format). */
@@ -280,7 +282,7 @@ function launch(user: User, c: CampaignRow, ids: string[], expected: unknown) {
     throw new ApiError(409, "price_changed", `The price is now ${formatCredits(p.total)} credits. Check it and try again.`);
   }
   const have = balance(user.id);
-  if (have < p.total) {
+  if (!isPersonalMode() && have < p.total) {
     throw new ApiError(402, "insufficient_credits", `This needs ${formatCredits(p.total)} credits and you have ${formatCredits(Math.max(0, have))}.`);
   }
   const now = Date.now();
@@ -351,7 +353,7 @@ function submit(user: User, it: ItemRow, format: AdFormat, step: "speech" | "mai
  * items in while job slots are free. Synchronous, so two calls never interleave.
  */
 export function pump(user: User) {
-  const limit = planOf(user.plan).concurrency;
+  const limit = generationPlan(user.plan).concurrency;
   const live = all<ItemRow>("SELECT * FROM ad_items WHERE user_id = ? AND status IN ('waiting', 'running') ORDER BY seq", user.id);
   for (const it of live) {
     const format = getFormat(it.format_id);

@@ -21,7 +21,7 @@ try {
   ok = await scenario(b, [
     ["open /mcp and see the hero", async () => {
       await open(`${base}/mcp`);
-      await b.until(`!!document.querySelector("h1") && document.querySelectorAll('ul[aria-label="Tools"] > li').length === 8`);
+      await b.until(`!!document.querySelector("h1") && document.querySelectorAll('ul[aria-label="Tools"] > li').length === 9`);
       await b.sleep(600);
       await b.shot("01-mcp");
       await b.shot("01b-mcp-full", { full: true });
@@ -59,7 +59,7 @@ try {
     }],
     ["the add button opens a dialog and Escape closes it", async () => {
       await b.evaluate(`window.scrollTo(0, 0)`);
-      await b.click("button", "Add Parallax to your agent");
+      await b.click("button", "Add Hacksfield to your agent");
       await b.until(`!!document.querySelector('[role="dialog"] pre')`, 3000, "dialog with snippet");
       await b.sleep(300);
       await b.shot("04-dialog");
@@ -72,7 +72,7 @@ try {
       await b.until(`document.querySelectorAll('ul[aria-label="Tools"] > li').length === 1`, 3000, "one tool");
       await b.click('button[aria-label="Clear search"]');
       await b.click("button[aria-pressed]", "Generate scope");
-      await b.until(`document.querySelectorAll('ul[aria-label="Tools"] > li').length === 1 && !!document.querySelector('[data-tool="generate"]')`, 3000, "generate only");
+      await b.until(`document.querySelectorAll('ul[aria-label="Tools"] > li').length === 2 && !!document.querySelector('[data-tool="generate"]') && !!document.querySelector('[data-tool="get_download"]')`, 3000, "generation and export tools");
       await b.click("button[aria-pressed]", "All tools");
       await b.click('[role="tab"]', "Audio");
       await b.until(`document.querySelectorAll('ul[aria-label="Example asks"] > li').length === 2`, 3000, "two audio asks");
@@ -80,7 +80,7 @@ try {
     }],
     ["the console asks a visitor to sign in", async () => {
       await open(`${base}/developer`);
-      await b.until(`document.body.innerText.includes("Build with Parallax")`, 10000, "explainer");
+      await b.until(`document.body.innerText.includes("Build with Hacksfield")`, 10000, "explainer");
       await b.sleep(300);
       await b.shot("05-console-signed-out");
       await noSideways();
@@ -120,9 +120,9 @@ try {
     ["the key works on the MCP server", async () => {
       const r = JSON.parse(await b.evaluate(`fetch("/api/mcp", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer ${secret}", "MCP-Protocol-Version": "2025-11-25" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }) }).then((r) => r.text())`));
       const names = r.result.tools.map((t) => t.name).sort().join(",");
-      if (names !== "generate,get_balance,get_generation,get_model,list_files,list_generations,list_models,quote") throw new Error(`tools: ${names}`);
+      if (names !== "generate,get_balance,get_download,get_generation,get_model,list_files,list_generations,list_models,quote") throw new Error(`tools: ${names}`);
       await b.evaluate(`fetch("/api/v1/balance", { headers: { authorization: "Bearer ${secret}" } })`);
-      return "8 tools, as the page lists";
+      return "9 tools, as the page lists";
     }],
     ["rename the key", async () => {
       await b.click("button", "Rename CI server");

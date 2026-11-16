@@ -1,4 +1,5 @@
 import "server-only";
+import { isPersonalMode } from "../provider-settings";
 
 import { MILLI, formatCredits } from "@/config/economy";
 import { getModel } from "@/registry";
@@ -59,7 +60,7 @@ function jobNotices(userId: string, after: number): number {
     } else {
       notify(userId, "generation_failed", {
         title: `Your ${noun} did not finish`,
-        body: `${j.error_message ? snippet(j.error_message) + " " : ""}The credits for it were returned.`,
+        body: `${j.error_message ? snippet(j.error_message) + " " : ""}${isPersonalMode() ? "Check Generation settings if this keeps happening." : "The credits for it were returned."}`,
         link: `${STUDIO[j.kind] ?? "/library"}?job=${j.id}`,
         data,
         dedupeKey: `job:${j.id}:failed`,
@@ -70,6 +71,7 @@ function jobNotices(userId: string, after: number): number {
 }
 
 function creditNotice(userId: string, state: { credit_level: number; credit_armed: number }) {
+  if (isPersonalMode()) return state;
   const bal = balance(userId);
   const level = CREDIT_THRESHOLDS.filter((t) => bal < t).length;
   if (level === state.credit_level) return state;

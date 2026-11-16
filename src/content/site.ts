@@ -114,7 +114,7 @@ export const promo = {
   endsAt: "2026-11-20T08:00:00Z",
   code: "LAUNCH-WEEK",
   countdownLabel: "Offer ends in",
-  /** Reads as: "Launch week: code LAUNCH-WEEK adds 100 free credits on [logo] Parallax". */
+  /** Reads as: "Launch week: code LAUNCH-WEEK adds 100 free credits on [logo] Hacksfield". */
   text: "Launch week: code LAUNCH-WEEK adds 100 free credits on",
   cta: { label: "Create your free account", href: routes.join },
   /** For someone who already has an account: straight to the code field in their wallet. */

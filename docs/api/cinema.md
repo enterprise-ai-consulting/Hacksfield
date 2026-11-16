@@ -11,7 +11,7 @@ starts from a still), or video from text. The **storyboard** reads the whole pro
 All routes are under `/api/cinema`. Everything except `GET /api/cinema/catalog` needs a
 signed-in member (guests count); signed out answers `401 unauthorized`.
 
-Conventions (same as the rest of Parallax):
+Conventions (same as the rest of Hacksfield):
 
 - Bodies are JSON objects. Unknown fields are ignored. Writes from another site answer `403 forbidden`.
 - Errors: `{ "error": { "code": "...", "message": "..." } }`. Show `message` to the member as written.

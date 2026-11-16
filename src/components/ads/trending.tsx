@@ -2,6 +2,7 @@
 
 import { Flame } from "lucide-react";
 import { formatCredits } from "@/config/economy";
+import { personalInstallation } from "@/config/installation";
 import { ads } from "@/content/ads";
 import { Artwork } from "@/ui";
 import type { AdFormat } from "./data";
@@ -45,7 +46,7 @@ export function Trending({ formats, loading, failed, onRetry, onChoose }: { form
                     <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-3 sm:p-4">
                       <span className="text-sm leading-5 font-semibold text-text-primary">{f.name}</span>
                       <span className="line-clamp-2 text-xs leading-4 text-text-tab">{f.platform.label}</span>
-                      {f.pricePerAd !== null ? <span className="text-2xs leading-3 font-medium text-brand">{formatCredits(f.pricePerAd)} {ads.pickers.perAd}</span> : null}
+                      {f.pricePerAd !== null ? <span className="text-2xs leading-3 font-medium text-brand">{personalInstallation ? `${f.metered ? "≤ " : ""}$${(f.providerUsd ?? 0).toFixed(3)} / ad` : `${formatCredits(f.pricePerAd)} ${ads.pickers.perAd}`}</span> : null}
                     </div>
                   </button>
                 </li>

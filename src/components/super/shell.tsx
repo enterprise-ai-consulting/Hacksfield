@@ -7,7 +7,7 @@ import { LogoMark } from "@/components/brand/logo";
 import { routes } from "@/content/site";
 import { copy } from "@/content/super";
 import { cn, Tag } from "@/ui";
-import { useDemoHint, useSuperEvents } from "./data";
+import { useConfig, useDemoHint, useSuperEvents } from "./data";
 import { Sidebar, type SideId } from "./sidebar";
 
 /**
@@ -30,6 +30,7 @@ export function SuperShell({
   const [collapsed, setCollapsed] = useState(false);
   const [sheet, setSheet] = useState(false);
   const demoHint = useDemoHint(active);
+  const { data: config } = useConfig();
   // Opening the stream here keeps the chat list live on every page.
   useSuperEvents(() => {});
 
@@ -57,6 +58,7 @@ export function SuperShell({
           <div className="pointer-events-none absolute top-0 right-0 left-0 z-20 flex h-[60px] items-start justify-between px-5 pt-5"
             style={{ backgroundImage: "linear-gradient(180deg, #131416 55%, #13141600 100%)" }}>
             <div className="pointer-events-auto flex items-center gap-2">
+              {config?.billing === "subscription" ? <Tag tone="neutral">Codex subscription</Tag> : null}
               <button
                 type="button"
                 aria-label={copy.nav.openMenu}

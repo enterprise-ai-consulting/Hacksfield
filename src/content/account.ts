@@ -1,6 +1,6 @@
 /**
  * Words for the member's own pages: settings, notification settings, wallet and invites.
- * Layout and style come from the design; every word here is Parallax's own.
+ * Layout and style come from the design; every word here is Hacksfield's own.
  */
 import { brand } from "@/config/brand";
 
