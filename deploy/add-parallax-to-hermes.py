@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Give a Hermes agent Hacksfield's tools: add the `parallax` MCP server to its config.yaml.
+"""Give a Hermes agent Hacksfield's tools: add the `hacksfield` MCP server to its config.yaml.
 
 Run it on the agent's machine, with the Python that Hermes uses (it needs PyYAML):
 
     python3 add-parallax-to-hermes.py --token-file /path/to/engine.token
         [--url http://127.0.0.1:13100/api/super/mcp]
-        [--config ~/.hermes/config.yaml] [--name parallax] [--remove] [--dry-run]
+        [--config ~/.hermes/config.yaml] [--name hacksfield] [--remove] [--dry-run]
 
 The token file holds the same value as Hacksfield's SUPER_ENGINE_TOKEN. It is written into the
 config file (which already holds the agent's other secrets) and is never printed.
@@ -20,7 +20,7 @@ p = argparse.ArgumentParser()
 p.add_argument('--config', default=os.path.expanduser('~/.hermes/config.yaml'))
 p.add_argument('--url', default='http://127.0.0.1:13100/api/super/mcp')
 p.add_argument('--token-file')
-p.add_argument('--name', default='parallax')
+p.add_argument('--name', default='hacksfield')
 p.add_argument('--remove', action='store_true')
 p.add_argument('--dry-run', action='store_true', help='check the edit, change nothing')
 a = p.parse_args()

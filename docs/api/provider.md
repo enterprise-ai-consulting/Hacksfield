@@ -237,4 +237,3 @@ a conservative reservation for failed/uncertain work unless rejection is known t
 have occurred before generation. Completed video content is fetched from Decart
 with server-side authentication and saved as a private owned Hacksfield asset.
 `DECART_MODE=mock` makes queued Decart jobs local and free for development.
-

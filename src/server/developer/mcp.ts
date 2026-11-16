@@ -22,7 +22,7 @@ import { balanceOut, createGeneration, findModel, getGeneration, listFiles, list
 export const MODERN_VERSIONS = ["2026-07-28"];
 export const LEGACY_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26"];
 const SUPPORTED = [...MODERN_VERSIONS, ...LEGACY_VERSIONS];
-const SERVER_INFO = { name: "parallax", title: "Hacksfield", version: "1.0.0" };
+const SERVER_INFO = { name: "hacksfield", title: "Hacksfield", version: "0.1.0" };
 const INSTRUCTIONS =
   "Hacksfield makes images, video and audio. Call list_models to find a model, get_model to see its controls and media slots, " +
   "quote to check the price, then generate. Generations run in the background: poll get_generation until the status is " +
@@ -203,7 +203,7 @@ export async function handleMcp(req: NextRequest, authorization: string | null):
     ({ auth, rate } = openKey(authorization));
   } catch (err) {
     const res = errorResponse(err);
-    res.headers.set("WWW-Authenticate", 'Bearer realm="parallax"');
+    res.headers.set("WWW-Authenticate", 'Bearer realm="hacksfield"');
     return res;
   }
   if (!rate.allowed) {

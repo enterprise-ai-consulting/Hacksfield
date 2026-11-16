@@ -87,7 +87,9 @@ file uses your private TOS storage and returns a one-hour link.
 Codex can use the loopback MCP endpoint. ChatGPT needs its own approved reachable
 connection, such as a private workspace tunnel. `deploy/chatgpt/connection.sh` is
 an optional transport helper; the official tunnel client, tunnel identity and keys
-must be configured separately. No existing private connection is bundled.
+must be configured separately. No existing private connection is bundled. If using
+port 3001, call the helper with `HACKSFIELD_PORT=3001`; its runtime/profile name is
+`hacksfield-chatgpt` so it is distinct from an existing Parallax connection.
 
 The optional subscription assistant uses an existing Hermes sign-in; it does not
 turn a ChatGPT subscription into a BytePlus or Decart API subscription. There is

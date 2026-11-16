@@ -8,7 +8,8 @@ APP_DIR="$(cd "$CONNECTION_DIR/../.." && pwd)"
 STATE_DIR="$APP_DIR/deploy/run/chatgpt"
 CLIENT="$STATE_DIR/bin/tunnel-client"
 ACTION="${1:-status}"
-ALIAS="parallax-chatgpt"
+ALIAS="hacksfield-chatgpt"
+MCP_URL="${HACKSFIELD_MCP_URL:-http://127.0.0.1:${HACKSFIELD_PORT:-3000}/api/mcp}"
 
 export XDG_CONFIG_HOME="$STATE_DIR/config"
 export XDG_STATE_HOME="$STATE_DIR/state"
@@ -34,9 +35,9 @@ case "$ACTION" in
     case "$TUNNEL_ID" in tunnel_*) ;; *) echo "Invalid tunnel identity." >&2; exit 1 ;; esac
     exec "$CLIENT" runtimes connect --json \
       --alias "$ALIAS" --tunnel-id "$TUNNEL_ID" \
-      --profile parallax-chatgpt --profile-dir "$STATE_DIR/profiles" \
+      --profile hacksfield-chatgpt --profile-dir "$STATE_DIR/profiles" \
       --runtime-api-key "file:$STATE_DIR/runtime-api.key" \
-      --mcp-server-url http://127.0.0.1:3000/api/mcp
+      --mcp-server-url "$MCP_URL"
     ;;
   status)
     exec "$CLIENT" runtimes status "$ALIAS" --json
