@@ -32,7 +32,7 @@ export function SelfHostInvite() {
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
-        <pre tabIndex={0} aria-label="Hacksfield install command" className="overflow-x-auto px-4 py-4 font-mono text-xs leading-6 text-text-primary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"><code>{selfHost.command}</code></pre>
+        <pre tabIndex={0} aria-label="Hacksfield install command" className="max-w-full px-4 py-4 font-mono text-xs leading-6 break-all whitespace-pre-wrap text-text-primary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"><code>{selfHost.command}</code></pre>
         <p className="px-4 pb-4 text-xs leading-5 text-text-nav">Paste into Terminal on macOS or Linux to install and start your own local copy.</p>
       </div>
       {copyError && <p role="status" className="mt-3 text-sm text-text-secondary">Select the command above and copy it manually.</p>}
