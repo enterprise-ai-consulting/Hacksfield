@@ -73,6 +73,13 @@ env["HACKSFIELD_TEAM_EMAILS"] = "owner@example.test,colleague@example.test"
 server = start()
 try:
     anonymous = Client()
+    for path in ["/", "/login"]:
+        with urllib.request.urlopen(BASE + path, timeout=10) as response:
+            html = response.read().decode()
+        assert "This studio is for EAIC." in html, "Visitors must see the private-studio message before JavaScript runs"
+        assert "raw.githubusercontent.com/enterprise-ai-consulting/Hacksfield/main/install.sh" in html
+        assert "owner@example.test" not in html and "colleague@example.test" not in html
+        checks += 1
     me = anonymous.request("/api/auth/me", public=True)
     assert me["teamMode"] is True and me["user"] is None
     anonymous.request("/api/settings/provider")  # Private loopback maintenance remains usable.

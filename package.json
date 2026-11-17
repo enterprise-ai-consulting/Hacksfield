@@ -11,6 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "python3 tests/run.py $(ls tests/*.py tests/ui/*.mjs | grep -v -e tests/run.py -e browser.mjs)",
     "test:unit": "node --conditions=react-server --import tsx --test tests/*.test.ts",
+    "test:install": "python3 tests/installer.py",
     "test:api": "python3 tests/run.py tests/developer.py tests/personal_byteplus.py"
   },
   "dependencies": {

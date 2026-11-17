@@ -12,13 +12,40 @@ provider accounts still charge for their API usage after any applicable free quo
 
 ## Install
 
+On **macOS or Linux**, paste this into Terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/enterprise-ai-consulting/Hacksfield/main/install.sh | bash
+```
+
+The [installer](install.sh) downloads a separate copy into `~/Hacksfield`, uses
+your compatible Node.js or verifies and installs a private Node.js 24 runtime,
+builds the app and starts it at [http://127.0.0.1:3000](http://127.0.0.1:3000).
+It does not use sudo, overwrite an existing folder, or include EAIC credentials,
+team restrictions or provider accounts. Stop with Control-C; run
+`~/Hacksfield/start.sh` to start it again. Installation requires network access.
+
+Choose a different folder or install without starting:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/enterprise-ai-consulting/Hacksfield/main/install.sh \
+  | HACKSFIELD_INSTALL_DIR="$HOME/MyHacksfield" bash -s -- --no-start
+```
+
+Go to **Generation settings** to connect your own provider accounts. Hacksfield
+has no membership fee; provider usage and hosting may cost money. Your local
+instance works without an EAIC account. Fork this repository to maintain your
+own version. [Private team hosting](deploy/team-hosting.md) is optional.
+
+### Manual setup
+
 Requires **Node.js 22.13+** and npm. Install **ffmpeg and ffprobe** for soundtrack
 extraction and local video tools (`brew install ffmpeg` on macOS).
 
 ```bash
 git clone https://github.com/enterprise-ai-consulting/Hacksfield.git
 cd Hacksfield
-npm ci
+npm ci --ignore-scripts --include=dev
 npm run dev
 ```
 
