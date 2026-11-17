@@ -62,7 +62,27 @@ export function codexResult(message: unknown): LlmResult {
   return { content, stopReason: content.some(b => b.type === "tool_use") ? "tool_use" : message.refusal ? "refusal" : "end_turn" };
 }
 
-export function subscriptionRequest(input: { model: string; messages: ChatMessage[]; tools?: unknown[] }, signal?: AbortSignal): Promise<unknown> {
+export async function subscriptionRequest(input: { model: string; messages: ChatMessage[]; tools?: unknown[] }, signal?: AbortSignal): Promise<unknown> {
+  const relay = process.env.HACKSFIELD_SUBSCRIPTION_BRIDGE_URL;
+  if (relay) {
+    const url = new URL(relay);
+    const key = process.env.HACKSFIELD_SUBSCRIPTION_BRIDGE_KEY;
+    if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.pathname !== "/respond" || url.username || url.password || url.search || url.hash || !key) {
+      throw new Error("The subscription relay requires authenticated loopback configuration.");
+    }
+    try {
+      const response = await fetch(url, {
+        method: "POST", redirect: "error", headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+        body: JSON.stringify(input), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(240_000)]) : AbortSignal.timeout(240_000),
+      });
+      if (!response.ok) throw new Error("relay unavailable");
+      const result: unknown = await response.json();
+      if (!record(result) || result.error || !record(result.message)) throw new Error("invalid response");
+      return result.message;
+    } catch {
+      throw new Error("The Codex subscription connection is unavailable. Keep the connected Mac online and check your Hermes sign-in. No paid API fallback was used.");
+    }
+  }
   const root = process.env.PARALLAX_HERMES_ROOT || path.join(os.homedir(), ".hermes", "hermes-agent");
   const python = path.join(root, "venv", "bin", "python");
   const script = path.join(process.cwd(), "scripts", "codex-subscription.py");

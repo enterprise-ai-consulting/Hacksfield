@@ -8,6 +8,7 @@ export interface Session {
   user: SessionUser | null;
   /** Millicredits. Format with `formatCredits` from "@/config/economy". */
   balance: number;
+  teamMode?: boolean;
 }
 
 const KEY = "/api/auth/me";
@@ -26,6 +27,7 @@ export function useSession() {
     balance: data?.balance ?? 0,
     /** True until the first answer arrives. Draw the signed-out look while this is true. */
     loading: isLoading,
+    teamMode: data?.teamMode ?? false,
   };
 }
 
@@ -69,8 +71,8 @@ export async function logIn(input: { email: string; password: string }): Promise
 }
 
 export async function logOut(): Promise<void> {
-  await api("/api/auth/logout", { method: "POST" });
-  await setSession({ user: null, balance: 0 });
+  const session = await api<Session>("/api/auth/logout", { method: "POST" });
+  await setSession(session);
   // Drop everything cached for the account that just left.
   await mutate((key) => typeof key === "string" && key !== KEY, undefined, { revalidate: false });
 }

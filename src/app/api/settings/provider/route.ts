@@ -4,11 +4,13 @@ import { isPersonalMode, providerSettings, saveProviderSettings } from "@/server
 import type { NextRequest } from "next/server";
 import { verifyBytePlusKey } from "@/server/byteplus";
 import { verifyDecartKey } from "@/server/decart";
+import { localMaintenanceRequest, teamSettingsAllowed } from "@/server/team-access";
+import type { User } from "@/server/auth";
 
-function localOnly(req: NextRequest) {
-  const host = req.headers.get("host") ?? "";
-  if (!isPersonalMode() || !/^(127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(host) || (req.headers.has("x-forwarded-host") && req.headers.get("x-forwarded-host") !== host)) {
-    throw new ApiError(403, "forbidden", "Generation settings are available only on this Mac's local personal installation.");
+function localOnly(req: NextRequest, user: User | null) {
+  if (teamSettingsAllowed(user)) return;
+  if (!isPersonalMode() || !localMaintenanceRequest(req.headers)) {
+    throw new ApiError(403, "forbidden", "Generation settings are available only to the studio owner or through local maintenance.");
   }
 }
 
@@ -27,13 +29,13 @@ function view() {
   };
 }
 
-export const GET = publicRoute(({ req }) => {
-  localOnly(req);
+export const GET = publicRoute(({ req, user }) => {
+  localOnly(req, user);
   return view();
 });
 
-export const POST = publicRoute(async ({ req }) => {
-  localOnly(req);
+export const POST = publicRoute(async ({ req, user }) => {
+  localOnly(req, user);
   const input = await readJson(req, 32768);
   if (typeof input.apiKey === "string" && input.apiKey) await verifyBytePlusKey(input.apiKey);
   if (typeof input.decartApiKey === "string" && input.decartApiKey) await verifyDecartKey(input.decartApiKey);

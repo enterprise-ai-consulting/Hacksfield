@@ -9,6 +9,7 @@ import { ensureDispatcher } from "./webhooks";
 import { authenticate, type ApiKey, type KeyAuth, type Scope } from "./keys";
 import { ROUTES, type RouteId } from "./routes";
 import type { User } from "../auth";
+import { assertTeamUser } from "../team-access";
 
 /**
  * The wrapper for every `/api/v1` route. The foundation's `route()` reads a cookie
@@ -116,6 +117,7 @@ export function openKey(authorization: string | null): { auth: KeyAuth; rate: Ra
   ensureDispatcher();
   const auth = authenticate(authorization);
   if (!auth) throw unauthorized();
+  assertTeamUser(auth.user);
   return { auth, rate: takeToken(auth.key.id) };
 }
 

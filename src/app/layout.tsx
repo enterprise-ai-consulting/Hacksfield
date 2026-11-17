@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Inter, Racing_Sans_One, Space_Grotesk, Space_Mono } from "next/font/google";
 import { brand } from "@/config/brand";
 import { bootScript } from "@/lib/closable";
+import { TeamGate } from "@/components/entry/team-gate";
 import "./globals.css";
 
 /*
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* Hides what the visitor closed earlier before the first paint. See src/lib/closable.ts. */}
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
-      <body>{children}</body>
+      <body><TeamGate>{children}</TeamGate></body>
     </html>
   );
 }

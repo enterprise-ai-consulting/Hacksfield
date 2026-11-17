@@ -2,6 +2,7 @@ import { syncSubscription } from "@/server/account/subscription";
 import { publicUser, userById } from "@/server/auth";
 import { balance } from "@/server/credits";
 import { publicRoute } from "@/server/http";
+import { teamMode } from "@/server/team-access";
 
 /**
  * Who is signed in, and what they have to spend. `user` is null when signed out.
@@ -9,7 +10,7 @@ import { publicRoute } from "@/server/http";
  * was away catches up: the new period and its credits show at once.
  */
 export const GET = publicRoute(({ user }) => {
-  if (!user) return { user: null, balance: 0 };
+  if (!user) return { user: null, balance: 0, teamMode: teamMode() };
   if (!user.isGuest) syncSubscription(user.id);
-  return { user: publicUser(userById(user.id) ?? user), balance: balance(user.id) };
+  return { user: publicUser(userById(user.id) ?? user), balance: balance(user.id), teamMode: teamMode() };
 });

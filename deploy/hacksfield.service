@@ -1,0 +1,31 @@
+[Unit]
+Description=Hacksfield creative studio
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hacksfield
+Group=hacksfield
+WorkingDirectory=/srv/hacksfield/current
+EnvironmentFile=/etc/hacksfield.env
+ExecStart=/opt/hacksfield/runtime/current/bin/node /srv/hacksfield/current/node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3125
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/hacksfield /srv/hacksfield/current/.next/cache
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

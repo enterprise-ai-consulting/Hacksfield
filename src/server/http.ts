@@ -6,6 +6,7 @@ import { SESSION_COOKIE, userFromToken, type User } from "./auth";
 import { ApiError, badRequest } from "./errors";
 import { sameOrigin } from "./origin";
 import { ensureWorker } from "./worker";
+import { assertTeamUser, localMaintenanceRequest, teamEmailAllowed, teamMode } from "./team-access";
 
 /**
  * Every API route goes through `route()`. It reads the session, guards against
@@ -46,9 +47,16 @@ async function open<P>(req: NextRequest, context: { params: Promise<P> }, jar: J
   if (req.method !== "GET" && req.method !== "HEAD" && !sameOrigin(req)) {
     throw new ApiError(403, "forbidden", "Cross-site request refused.");
   }
-  ensureWorker();
   const token = jar.get(SESSION_COOKIE)?.value;
-  return { req, user: token ? userFromToken(token) : null, params: await context.params };
+  let user = token ? userFromToken(token) : null;
+  if (teamMode()) {
+    if (user && (user.isGuest || !teamEmailAllowed(user.email))) user = null;
+    const entry = ["/api/auth/me", "/api/auth/login"].includes(req.nextUrl.pathname);
+    const localSettings = req.nextUrl.pathname === "/api/settings/provider" && localMaintenanceRequest(req.headers);
+    if (!entry && !localSettings) assertTeamUser(user);
+  }
+  ensureWorker();
+  return { req, user, params: await context.params };
 }
 
 /*
@@ -117,5 +125,5 @@ export function rateLimit(key: string, max: number, windowMs: number) {
 }
 
 export function clientKey(req: NextRequest): string {
-  return (req.headers.get("x-forwarded-for") ?? "local").split(",")[0].trim();
+  return (req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for") ?? "local").split(",")[0].trim();
 }
