@@ -37,7 +37,44 @@ Publish through an HTTPS reverse proxy or an existing Cloudflare Tunnel only
 after checking that anonymous API requests are rejected. No Cloudflare Access
 subscription is required for Hacksfield's built-in team logins.
 
-## Retaining a Mac subscription connection
+## Running ChatGPT connections on the server
+
+Run the official Linux `tunnel-client` beside the private MCP endpoint using
+`hacksfield-chatgpt.service`. Reuse the existing tunnel identity, restricted
+Tunnels Read/Use runtime key, and MCP authorization; keep them in owner-readable
+files under `/var/lib/hacksfield/chatgpt`. The private profile belongs in its
+`profiles/` directory and should target `http://127.0.0.1:3125/api/mcp`. It must
+reference the runtime key file rather than contain a literal credential.
+
+The service starts automatically and restarts on failure. It needs outbound HTTPS
+to OpenAI and does not expose an additional public endpoint. The optional
+`deploy/chatgpt/server-status.py` operator helper reports only health/readiness,
+without printing process arguments, tokens or full configuration. Stop the old
+Mac runtime after the server has passed configuration validation; the existing
+ChatGPT plugin can retain its tunnel and authorization.
+
+For the studio's subscription-backed assistant, install a compatible, pinned
+Hermes adapter runtime on the server and sign in with the same ChatGPT account
+using an independent device-code authorization and isolated private profile.
+Configure the app service with:
+
+```text
+PARALLAX_ASSISTANT_PROVIDER=codex-subscription
+PARALLAX_HERMES_ROOT=/opt/hacksfield/hermes
+PARALLAX_HERMES_HOME=/var/lib/hacksfield/hermes
+```
+
+Allow the service account to update that profile for OAuth refresh, with its auth
+file mode `0600` and directory mode `0700`. Keep all other provider credentials,
+Hermes profiles and SSH keys out of this profile. Remove the two
+`HACKSFIELD_SUBSCRIPTION_BRIDGE_*` settings when switching to a server-local
+adapter. This configuration needs no Mac relay and has no paid LLM fallback.
+
+Check readiness and make a read-only ChatGPT tool call with the Mac forward and
+relay stopped before reporting the migration complete. A Mac may still keep an
+optional local SSH forward for an existing Codex MCP URL.
+
+## Optional Mac subscription relay
 
 `scripts/subscription-bridge.py` can keep an existing Hermes ChatGPT subscription
 on its original Mac. It binds only to loopback, requires a private key file,

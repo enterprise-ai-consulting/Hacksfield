@@ -1,0 +1,37 @@
+[Unit]
+Description=Hacksfield private ChatGPT connection
+After=network-online.target hacksfield.service
+Wants=network-online.target hacksfield.service
+
+[Service]
+Type=simple
+User=hacksfield
+Group=hacksfield
+Environment=HOME=/var/lib/hacksfield
+Environment=XDG_CONFIG_HOME=/var/lib/hacksfield/chatgpt/config
+Environment=XDG_STATE_HOME=/var/lib/hacksfield/chatgpt/state
+Environment="MCP_EXTRA_HEADERS=Authorization: file:/var/lib/hacksfield/chatgpt/mcp-authorization.key"
+Environment="MCP_DISCOVERY_EXTRA_HEADERS=Authorization: file:/var/lib/hacksfield/chatgpt/mcp-authorization.key"
+Environment=MCP_OAUTH_DISCOVERY=disabled
+WorkingDirectory=/var/lib/hacksfield/chatgpt
+ExecStartPre=/usr/bin/mkdir -p /var/lib/hacksfield/chatgpt/state/tunnel-client/logs /var/lib/hacksfield/chatgpt/state/tunnel-client/health
+ExecStart=/opt/hacksfield/chatgpt/bin/tunnel-client run --profile hacksfield-chatgpt --profile-dir /var/lib/hacksfield/chatgpt/profiles --health.listen-addr 127.0.0.1:0 --health.url-file /var/lib/hacksfield/chatgpt/health.url
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/hacksfield/chatgpt
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
